@@ -1,0 +1,60 @@
+/docs
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# Environment variables
+.env
+.env.*
+
+# Django stuff
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Local settings
+local_settings.py
+
+# Migrations (opcional - normalmente NÃO ignorar)
+# */migrations/*
+# !*/migrations/__init__.py
+
+# IDEs / Editors
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checkers
+.mypy_cache/
+.pyre/
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+
+# Node (se usar frontend junto)
+node_modules/
+
+# Secrets
+*.pem
+*.key
