@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres:17
+    container_name: datagrapho-db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - datagrapho_postgres_data:/var/lib/postgresql/data
+
+  backend:
+    image: datagrapho-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: datagrapho-backend
+    restart: always
+    # volumes:
+    #   - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  # frontend:
+  #   build: ./frontend
+  #   container_name: datagrapho-frontend
+  #   restart: always
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - backend
+
+volumes:
+  datagrapho_postgres_data:
