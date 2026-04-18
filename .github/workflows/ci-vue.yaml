@@ -1,0 +1,33 @@
+name: CI-Vue-App
+
+on:
+  workflow_call:
+
+env:
+  checkout_hash: ${{ vars.ACTIONS_CHECKOUT_HASH }}
+  node_setup_hash: ${{ vars.ACTIONS_NODE_SETUP_HASH }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@$checkout_hash
+      
+      - name: setup node
+        uses: actions/setup-node@$node_setup_hash
+        with:
+          node-version: '25'
+          cache: 'npm'
+      
+      - name: install dependencies
+        run: npm ci
+      
+      - name: lint code
+        run: npm run lint
+      
+      - name: type check
+        run: npm run type-check
+      
+      - name: run unit tests
+        run: npm run test:unit
