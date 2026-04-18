@@ -1,0 +1,42 @@
+name: CI-Code-Scan
+
+on:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      SONAR_HOST_URL:
+        required: true
+
+env:
+  checkout_hash: ${{ vars.ACTIONS_CHECKOUT_HASH }}
+  sonarscanner_hash: ${{ vars.ACTIONS_SONARSCANNER_HASH }}
+
+jobs:
+  sonarqube-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@$checkout_hash
+      
+      - name: sonar-scanner
+        uses: sonarsource/sonarqube-scan-action@$sonarscanner_hash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.sources=${{ secrets.SONAR_SOURCES }}
+  
+  semgrep-scan:
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    if: (github.actor != 'dependabot[bot]')
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@$checkout_hash
+
+      - name: semgrep scan
+        run: semgrep scan --config=${{ secrets.SEMGREP_RULES }} ${{ secrets.SEMGREP_SOURCES }}
