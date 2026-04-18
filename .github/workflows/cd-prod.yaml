@@ -1,0 +1,27 @@
+name: CD-Deploy-Production
+
+on:
+  workflow_run:
+    workflows: ["CI-Orchestrator"]
+    types:
+      - completed
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  sshaction_hash: ${{ vars.ACTIONS_SSHACTION_HASH }}
+
+jobs:
+  deploy-fe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh deploy
+        uses: appleboy/ssh-action@$sshaction_hash
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script:
