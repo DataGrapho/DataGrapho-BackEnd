@@ -1,10 +1,19 @@
 name: CI-Orchestrator
 
 on:
-  pull-request:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'feature/**'
+    branches-ignore:
+      - 'release/**'
+      - 'main'
+      - 'feature/fe-pipeline'
+  pull_request:
     types:
       - closed
     branches:
+      - 'main'
       - 'release/**'
 
 concurrency:
@@ -28,3 +37,19 @@ jobs:
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    if: |
+      (github.event_name == 'pull_request' && contains(github.head_ref, 'release/')) ||
+      (github.event_name == 'push' && contains(github.ref, 'release/'))
+
+  cd-deploy:
+    uses: ./.github/workflows/cd-deploy.yaml
+    needs: ci-build
+    if: |
+      github.event_name == 'pull_request' && 
+      contains(github.head_ref, 'release/') && 
+      github.base_ref == 'main' &&
+      github.event.pull_request.merged == true
+
+  version-tag:
+    uses: ./.github/workflows/version-tag.yaml
+    needs: cd-deploy
