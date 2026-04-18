@@ -14,14 +14,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get next version
+      - name: get next version
         id: version
         run: |
-          # Extract version from release branch name (e.g., release/1.2.3 -> 1.2.3)
+          # release/1.2.3 -> 1.2.3
           VERSION=$(echo "${{ github.head_ref }}" | sed 's/release\///')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Tag main branch
+      - name: tag main branch
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
