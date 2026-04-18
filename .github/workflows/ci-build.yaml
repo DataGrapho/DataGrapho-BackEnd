@@ -1,0 +1,57 @@
+name: build docker image
+
+on:
+  workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+
+env:
+  checkout_hash: ${{ vars.ACTIONS_CHECKOUT_HASH }}
+  hadolint_hash: ${{ vars.ACTIONS_HADOLINT_HASH }}
+  dockerlogin_hash: ${{ vars.ACTIONS_DOCKERLOGIN_HASH }}
+  dockerbuildpush_hash: ${{ vars.ACTIONS_DOCKERBUILDPUSH_HASH }}
+  trivyscan_hash: ${{ vars.ACTIONS_TRIVYSCAN_HASH }}
+
+jobs:
+  docker-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@$checkout_hash
+
+      - name: dockerfile lint
+        uses: hadolint/hadolint-action@$hadolint_hash
+        with:
+          dockerfile: Dockerfile
+
+  docker-build-publish:
+    runs-on: ubuntu-latest
+    needs: docker-lint
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@$checkout_hash
+
+      - name: docker login
+        uses: docker/login-action@$dockerlogin_hash
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: docker build and push
+        uses: docker/build-push-action@$dockerbuildpush_hash
+        with:
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/datagrapho-fe:${{ github.sha }}
+
+      - name: trivy vulnerability scan
+        uses: aquasecurity/trivy-action@$trivyscan_hash
+        with:
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/datagrapho-fe:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
