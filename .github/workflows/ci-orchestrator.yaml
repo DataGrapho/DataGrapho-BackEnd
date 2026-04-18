@@ -1,0 +1,30 @@
+name: ci orchestrator
+
+on:
+  pull-request:
+    types:
+      - closed
+    branches:
+      - 'release/**'
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-vue:
+    uses: ./.github/workflows/ci-vue.yaml
+
+  ci-code-scan:
+    uses: ./.github/workflows/ci-code-scan.yaml
+    needs: ci-vue
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  ci-build:
+    uses: ./.github/workflows/ci-build.yaml
+    needs: ci-code-scan
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
