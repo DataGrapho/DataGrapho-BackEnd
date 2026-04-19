@@ -1,0 +1,64 @@
+name: CI-Orchestrator
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'feature/**'
+    branches-ignore:
+      - 'release/**'
+      - 'main'
+      - 'feature/fe-pipeline'
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'main'
+      - 'release/**'
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-vue:
+    uses: ./.github/workflows/ci-vue.yaml
+
+  ci-code-scan:
+    uses: ./.github/workflows/ci-code-scan.yaml
+    needs: ci-vue
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      SONAR_SOURCES: ${{ secrets.SONAR_SOURCES }}
+      SEMGREP_RULES: ${{ secrets.SEMGREP_RULES }}
+      SEMGREP_SOURCES: ${{ secrets.SEMGREP_SOURCES }}
+
+  ci-build:
+    uses: ./.github/workflows/ci-build.yaml
+    needs: ci-code-scan
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    if: |
+      (github.event_name == 'pull_request' && contains(github.head_ref, 'release/')) ||
+      (github.event_name == 'push' && contains(github.ref, 'release/'))
+
+  cd-deploy:
+    uses: ./.github/workflows/cd-deploy.yaml
+    needs: ci-build
+    secrets:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+    if: |
+      github.event_name == 'pull_request' && 
+      contains(github.head_ref, 'release/') && 
+      github.base_ref == 'main' &&
+      github.event.pull_request.merged == true
+
+  version-tag:
+    uses: ./.github/workflows/version-tag.yaml
+    needs: cd-deploy
