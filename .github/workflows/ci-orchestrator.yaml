@@ -32,8 +32,6 @@ jobs:
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
       SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
       SONAR_SOURCES: ${{ secrets.SONAR_SOURCES }}
-      SEMGREP_RULES: ${{ secrets.SEMGREP_RULES }}
-      SEMGREP_SOURCES: ${{ secrets.SEMGREP_SOURCES }}
 
   ci-build:
     uses: ./.github/workflows/ci-build.yaml
@@ -54,8 +52,8 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       SSH_PORT: ${{ secrets.SSH_PORT }}
     if: |
-      github.event_name == 'pull_request' && 
-      contains(github.head_ref, 'release/') && 
+      github.event_name == 'pull_request' &&
+      contains(github.head_ref, 'release/') &&
       github.base_ref == 'main' &&
       github.event.pull_request.merged == true
 
