@@ -11,10 +11,6 @@ on:
         required: true
       SONAR_SOURCES:
         required: true
-      SEMGREP_RULES:
-        required: true
-      SEMGREP_SOURCES:
-        required: true
 
 env:
   checkout_hash: ${{ vars.ACTIONS_CHECKOUT_HASH }}
