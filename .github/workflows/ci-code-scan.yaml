@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: checkout repo
         uses: actions/checkout@$checkout_hash
-      
+
       - name: sonar-scanner
         uses: sonarsource/sonarqube-scan-action@$sonarscanner_hash
         env:
@@ -36,7 +36,7 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.sources=${{ secrets.SONAR_SOURCES }}
-  
+
   semgrep-scan:
     runs-on: ubuntu-latest
     container:
@@ -47,4 +47,4 @@ jobs:
         uses: actions/checkout@$checkout_hash
 
       - name: semgrep scan
-        run: semgrep scan --config=${{ secrets.SEMGREP_RULES }} ${{ secrets.SEMGREP_SOURCES }}
+        run: semgrep scan --config auto
