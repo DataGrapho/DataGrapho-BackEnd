@@ -1,5 +1,5 @@
 from django.db import models
-from entidades.catalogo_depara.models import CatalogoDePara
+from catalogo_depara.models import CatalogoDePara
 
 
 class DePara(models.Model):
