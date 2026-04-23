@@ -35,8 +35,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'accounts',
-    'entidades.catalogo_depara',
-    'entidades.depara',
+    'catalogo_depara',
+    'depara',
 ]
 
 MIDDLEWARE = [

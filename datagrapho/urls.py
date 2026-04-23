@@ -8,8 +8,8 @@ from django.urls import include, path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
-    path('api/v1/catalogo-depara/', include('entidades.catalogo_depara.urls')),
-    path('api/v1/depara/', include('entidades.depara.urls')),
+    path('api/v1/catalogo-depara/', include('catalogo_depara.urls')),
+    path('api/v1/depara/', include('depara.urls')),
 ]
 
 if settings.DEBUG:
