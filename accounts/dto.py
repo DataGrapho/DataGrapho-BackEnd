@@ -10,35 +10,35 @@ from .models import Empresa, Filial, Perfil, Setor, UsuarioAcesso
 User = get_user_model()
 
 
-class EmpresaSerializer(serializers.ModelSerializer):
+class EmpresaDto(serializers.ModelSerializer):
     class Meta:
         model = Empresa
         fields = ("id_empresa", "nome", "cnpj")
 
 
-class FilialSerializer(serializers.ModelSerializer):
+class FilialDto(serializers.ModelSerializer):
     class Meta:
         model = Filial
         fields = ("id_filial", "nome")
 
 
-class SetorSerializer(serializers.ModelSerializer):
+class SetorDto(serializers.ModelSerializer):
     class Meta:
         model = Setor
         fields = ("id_setor", "nome")
 
 
-class PerfilSerializer(serializers.ModelSerializer):
+class PerfilDto(serializers.ModelSerializer):
     class Meta:
         model = Perfil
         fields = ("id_perfil", "nome")
 
 
-class UsuarioAcessoSerializer(serializers.ModelSerializer):
-    empresa = EmpresaSerializer()
-    filial = FilialSerializer(allow_null=True)
-    setor = SetorSerializer(allow_null=True)
-    perfil = PerfilSerializer()
+class UsuarioAcessoDto(serializers.ModelSerializer):
+    empresa = EmpresaDto()
+    filial = FilialDto(allow_null=True)
+    setor = SetorDto(allow_null=True)
+    perfil = PerfilDto()
 
     class Meta:
         model = UsuarioAcesso
@@ -53,7 +53,7 @@ class UsuarioAcessoSerializer(serializers.ModelSerializer):
         )
 
 
-class UsuarioMeSerializer(serializers.ModelSerializer):
+class UsuarioMeDto(serializers.ModelSerializer):
     id_usuario = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -61,7 +61,7 @@ class UsuarioMeSerializer(serializers.ModelSerializer):
         fields = ("id_usuario", "cpf", "email", "nome", "is_active", "data_criacao", "last_login")
 
 
-class LoginTokenSerializer(TokenObtainPairSerializer):
+class LoginTokenDto(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -77,12 +77,12 @@ class LoginTokenSerializer(TokenObtainPairSerializer):
             .filter(usuario=user, ativo=True)
             .order_by("id")
         )
-        data["usuario"] = UsuarioMeSerializer(user).data
-        data["acessos"] = UsuarioAcessoSerializer(acessos, many=True).data
+        data["usuario"] = UsuarioMeDto(user).data
+        data["acessos"] = UsuarioAcessoDto(acessos, many=True).data
         return data
 
 
-class UsuarioAcessoCreateSerializer(serializers.Serializer):
+class UsuarioAcessoCreateDto(serializers.Serializer):
     id_empresa = serializers.IntegerField()
     id_filial = serializers.IntegerField(required=False, allow_null=True)
     id_setor = serializers.IntegerField(required=False, allow_null=True)
@@ -97,13 +97,13 @@ class UsuarioAcessoCreateSerializer(serializers.Serializer):
         return attrs
 
 
-class RegisterSerializer(serializers.Serializer):
+class RegisterDto(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
     cpf = serializers.CharField(max_length=14)
     nome = serializers.CharField(max_length=200)
     password = serializers.CharField(min_length=6, write_only=True)
     is_active = serializers.BooleanField(required=False, default=True)
-    acessos = UsuarioAcessoCreateSerializer(many=True, required=False)
+    acessos = UsuarioAcessoCreateDto(many=True, required=False)
 
     def validate_email(self, value: str):
         if User.objects.filter(email=value).exists():

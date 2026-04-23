@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import CatalogoDePara
-from .serializers import CatalogoDeparaListSerializer, CatalogoDeparaSerializer
+from .dto import CatalogoDeparaDto, CatalogoDeparaListDto
 from .service import CatalogoDeparaService
 
 
@@ -11,7 +11,7 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
     """Controller for CatalogoDePara REST endpoints."""
 
     queryset = CatalogoDePara.objects.all()
-    serializer_class = CatalogoDeparaSerializer
+    serializer_class = CatalogoDeparaDto
     lookup_field = "id_catalogo"
 
     def __init__(self, *args, **kwargs):
@@ -20,8 +20,8 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "list":
-            return CatalogoDeparaListSerializer
-        return CatalogoDeparaSerializer
+            return CatalogoDeparaListDto
+        return CatalogoDeparaDto
 
     def list(self, request, *args, **kwargs):
         try:
