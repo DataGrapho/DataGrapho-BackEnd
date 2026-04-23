@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .entity import DePara
+
+from .models import DePara
 
 
 @admin.register(DePara)

@@ -2,7 +2,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .entity import DePara
+from .models import DePara
 from .serializers import DeparaDetailSerializer, DeparaListSerializer, DeparaSerializer
 from .service import DeparaService
 

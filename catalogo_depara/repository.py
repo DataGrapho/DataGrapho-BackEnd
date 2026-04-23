@@ -1,6 +1,8 @@
 from typing import List, Optional
+
 from django.db.models import Q
-from .entity import CatalogoDePara
+
+from .models import CatalogoDePara
 
 
 class CatalogoDeparaRepository:
