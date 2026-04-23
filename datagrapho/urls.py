@@ -7,9 +7,9 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/', include('accounts.urls')),
-    path('api/v1/catalogo-depara/', include('catalogo_depara.urls')),
-    path('api/v1/depara/', include('depara.urls')),
+    path('api/auth/', include('accounts.router')),
+    path('api/v1/catalogo-depara/', include('catalogo_depara.router')),
+    path('api/v1/depara/', include('depara.router')),
 ]
 
 if settings.DEBUG:

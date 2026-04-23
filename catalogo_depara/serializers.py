@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CatalogoDePara
+from .entity import CatalogoDePara
 
 
 class CatalogoDeparaSerializer(serializers.ModelSerializer):
