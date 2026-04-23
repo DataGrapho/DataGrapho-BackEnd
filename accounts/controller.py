@@ -7,18 +7,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import LoginTokenSerializer, RegisterSerializer, UsuarioAcessoSerializer, UsuarioMeSerializer
+from .dto import LoginTokenDto, RegisterDto, UsuarioAcessoDto, UsuarioMeDto
 
 
 class LoginView(TokenObtainPairView):
-    serializer_class = LoginTokenSerializer
+    serializer_class = LoginTokenDto
 
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response(UsuarioMeSerializer(request.user).data)
+        return Response(UsuarioMeDto(request.user).data)
 
 
 class RegisterView(APIView):
@@ -34,12 +34,12 @@ class RegisterView(APIView):
         return [IsAdminUser()]
 
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+        serializer = RegisterDto(data=request.data)
         serializer.is_valid(raise_exception=True)
         user, acessos = serializer.save()
 
         response = {
-            "usuario": UsuarioMeSerializer(user).data,
-            "acessos": UsuarioAcessoSerializer(acessos, many=True).data,
+            "usuario": UsuarioMeDto(user).data,
+            "acessos": UsuarioAcessoDto(acessos, many=True).data,
         }
         return Response(response, status=201)
