@@ -1,6 +1,8 @@
 from typing import List, Optional
+
 from django.db import transaction
-from .entity import DePara
+
+from .models import DePara
 from .repository import DeparaRepository
 
 

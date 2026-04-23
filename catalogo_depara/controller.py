@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .entity import CatalogoDePara
+from .models import CatalogoDePara
 from .serializers import CatalogoDeparaListSerializer, CatalogoDeparaSerializer
 from .service import CatalogoDeparaService
 

@@ -1,6 +1,8 @@
 from typing import List, Optional, Dict, Any
+
 from django.db import transaction
-from .entity import CatalogoDePara
+
+from .models import CatalogoDePara
 from .repository import CatalogoDeparaRepository
 
 

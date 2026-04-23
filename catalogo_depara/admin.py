@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .entity import CatalogoDePara
+from .models import CatalogoDePara
 
 
 @admin.register(CatalogoDePara)

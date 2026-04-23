@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .entity import Empresa, Filial, Perfil, Setor, UsuarioAcesso
+from .models import Empresa, Filial, Perfil, Setor, UsuarioAcesso
 
 
 User = get_user_model()
