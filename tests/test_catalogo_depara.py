@@ -1,5 +1,5 @@
 from django.test import TestCase
-from catalogo_depara.models import CatalogoDePara
+from catalogo_depara.entity import CatalogoDePara
 from catalogo_depara.service import CatalogoDeparaService
 
 

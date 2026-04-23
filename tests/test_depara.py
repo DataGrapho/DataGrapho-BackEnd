@@ -1,6 +1,6 @@
 from django.test import TestCase
-from catalogo_depara.models import CatalogoDePara
-from depara.models import DePara
+from catalogo_depara.entity import CatalogoDePara
+from depara.entity import DePara
 from depara.service import DeparaService
 
 

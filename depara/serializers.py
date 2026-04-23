@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DePara
+from .entity import DePara
 
 
 class DeparaSerializer(serializers.ModelSerializer):
