@@ -6,7 +6,7 @@ from .controller import CatalogoDeparaViewSet
 app_name = "catalogo_depara"
 
 router = DefaultRouter()
-router.register(r"", CatalogoDeparaViewSet, basename="catalogo_depara")
+router.register(r"", CatalogoDeparaViewSet, basename="catalogo")
 
 urlpatterns = [
     path("", include(router.urls)),

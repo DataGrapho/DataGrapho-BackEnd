@@ -1,14 +1,21 @@
-from rest_framework import viewsets, status
+from __future__ import annotations
+
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import CatalogoDePara
+# from drf_spectacular.utils import extend_schema, extend_schema_view
 from .dto import CatalogoDeparaDto, CatalogoDeparaListDto
+from .models import CatalogoDePara
 from .service import CatalogoDeparaService
 
 
 class CatalogoDeparaViewSet(viewsets.ModelViewSet):
-    """Controller for CatalogoDePara REST endpoints."""
+    """Manage CatalogoDePara - data mapping catalogs.
+    
+    List all catalogs, create new ones, and manage individual catalog details.
+    Supports filtering by status and search terms.
+    """
 
     queryset = CatalogoDePara.objects.all()
     serializer_class = CatalogoDeparaDto
@@ -24,6 +31,13 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
         return CatalogoDeparaDto
 
     def list(self, request, *args, **kwargs):
+        """List all catalogs with optional filtering.
+        
+        Query parameters:
+        - ativo: Filter by status (true/false)
+        - tabela_origem: Filter by source table
+        - search: Search by name or description
+        """
         try:
             ativo = request.query_params.get("ativo")
             if ativo is not None:
@@ -49,6 +63,7 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
+        """Create a new catalog."""
         try:
             catalog = self.service.create_catalogo(request.data)
             serializer = self.get_serializer(catalog)
@@ -69,6 +84,7 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def retrieve(self, request, *args, **kwargs):
+        """Get a specific catalog by ID."""
         try:
             id_catalogo = kwargs.get("id_catalogo")
             catalog = self.service.get_catalogo_by_id(id_catalogo)
@@ -90,6 +106,7 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, *args, **kwargs):
+        """Update a catalog (full update)."""
         try:
             id_catalogo = kwargs.get("id_catalogo")
 
@@ -122,9 +139,11 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def partial_update(self, request, *args, **kwargs):
+        """Partial update a catalog."""
         return self.update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
+        """Delete a catalog."""
         try:
             id_catalogo = kwargs.get("id_catalogo")
 

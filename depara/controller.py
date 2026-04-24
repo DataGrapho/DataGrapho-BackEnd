@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import DePara
 from .dto import DeparaDetailDto, DeparaDto, DeparaListDto
+from .models import DePara
 from .service import DeparaService
 
 
 class DeparaViewSet(viewsets.ModelViewSet):
-    """Controller for DePara REST endpoints."""
+    """Manage DePara - data mapping definitions with hierarchical levels.
+    
+    List all mappings, create new ones, and manage individual mapping details.
+    Supports filtering by catalog, status, and search terms.
+    Supports hierarchical mappings through id_depara_pai (parent mapping).
+    """
 
     queryset = DePara.objects.all()
     serializer_class = DeparaDto
@@ -26,6 +33,15 @@ class DeparaViewSet(viewsets.ModelViewSet):
         return DeparaDto
 
     def list(self, request, *args, **kwargs):
+        """List all mappings with optional filtering.
+        
+        Query parameters:
+        - id_catalogo: Filter by catalog ID
+        - ativo: Filter by status (true/false)
+        - codigo_origem: Filter by source code
+        - codigo_destino: Filter by destination code
+        - search: Search by description
+        """
         try:
             id_catalogo = request.query_params.get("id_catalogo")
             ativo = request.query_params.get("ativo")
@@ -59,6 +75,7 @@ class DeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
+        """Create a new mapping with optional parent mapping for hierarchical levels."""
         try:
             depara = self.service.create_depara(request.data)
             serializer = self.get_serializer(depara)
@@ -79,6 +96,7 @@ class DeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def retrieve(self, request, *args, **kwargs):
+        """Get a specific mapping by ID with all its details."""
         try:
             id_depara = kwargs.get("id_depara")
             depara = self.service.get_depara_by_id(id_depara)
@@ -100,6 +118,7 @@ class DeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, *args, **kwargs):
+        """Update a mapping (full update)."""
         try:
             id_depara = kwargs.get("id_depara")
 
@@ -132,9 +151,11 @@ class DeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def partial_update(self, request, *args, **kwargs):
+        """Partial update a mapping."""
         return self.update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
+        """Delete a mapping."""
         try:
             id_depara = kwargs.get("id_depara")
 
