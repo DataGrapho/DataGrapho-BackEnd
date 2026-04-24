@@ -5,11 +5,15 @@ from catalogo_depara.models import CatalogoDePara
 
 class DePara(models.Model):
 
-    """Model for DePara entity."""
+    """Para fazer o alto relacionamento, usaremos uma fk para fazer um self join que se relacione com o codigo da linha pai
+
+    """
 
     id_depara = models.AutoField(primary_key=True, verbose_name="ID DePara")
 
     id_catalogo = models.ForeignKey(CatalogoDePara, on_delete=models.CASCADE, verbose_name="ID Catálogo")
+
+    id_depara_pai = models.ForeignKey('self',on_delete=models.SET_NULL,null=True,blank=True,verbose_name="ID DePara Pai",related_name='de_paras_filhos',db_column='id_depara_pai')
 
     id_acesso = models.IntegerField(null=True, blank=True, verbose_name="ID Acesso")
 

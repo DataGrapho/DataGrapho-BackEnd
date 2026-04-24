@@ -74,7 +74,7 @@ class DeparaDetailDto(serializers.ModelSerializer):
             "atualizado_em",
         ]
 
-    def get_catalogo(self, obj):
+    def get_catalogo(self, obj) -> dict:
         return {
             "id_catalogo": obj.id_catalogo.id_catalogo,
             "tabela_origem": obj.id_catalogo.tabela_origem,
