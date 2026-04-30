@@ -1,1 +1,0 @@
-# DePara App
