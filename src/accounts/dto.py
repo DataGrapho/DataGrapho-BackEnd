@@ -147,3 +147,18 @@ class RegisterDto(serializers.Serializer):
             )
 
         return user, created_acessos
+
+
+class ForgotPasswordDto(serializers.Serializer):
+    email = serializers.EmailField(max_length=255)
+
+
+class ResetPasswordDto(serializers.Serializer):
+    password = serializers.CharField(min_length=6, write_only=True)
+    confirmPassword = serializers.CharField(min_length=6, write_only=True)
+    token = serializers.CharField(max_length=255)
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["confirmPassword"]:
+            raise serializers.ValidationError({"confirmPassword": ["As senhas não conferem."]})
+        return attrs
