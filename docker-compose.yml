@@ -30,6 +30,7 @@ services:
       - "8000:8000"
     environment:
       - DEBUG=True
+      - PYTHONPATH=/app/src
       - DB_ENGINE=django.db.backends.postgresql
       - DB_NAME=datagrapho
       - DB_USER=postgres
