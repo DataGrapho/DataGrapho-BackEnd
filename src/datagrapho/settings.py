@@ -12,6 +12,7 @@ except Exception:
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent
 
 SECRET_KEY = os.getenv(
     'SECRET_KEY',
@@ -56,7 +57,7 @@ ROOT_URLCONF = 'datagrapho.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [PROJECT_ROOT / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -75,7 +76,7 @@ WSGI_APPLICATION = 'datagrapho.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.getenv('DB_NAME', str(BASE_DIR / 'db.sqlite3')),
+        'NAME': os.getenv('DB_NAME', str(PROJECT_ROOT / 'db.sqlite3')),
         'USER': os.getenv('DB_USER', ''),
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', ''),
@@ -99,10 +100,10 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = PROJECT_ROOT / 'staticfiles'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = PROJECT_ROOT / 'media'
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

@@ -57,10 +57,10 @@ docker-build:
 	docker-compose build
 
 format:
-	black --line-length 100 accounts/ catalogo_depara/ depara/ datagrapho/ tests/ manage.py
+	black --line-length 100 src/accounts/ src/catalogo_depara/ src/depara/ src/datagrapho/ tests/ manage.py
 
 lint:
-	pylint --load-plugins pylint_django accounts/ catalogo_depara/ depara/ datagrapho/ tests/
+	pylint --load-plugins pylint_django src/accounts/ src/catalogo_depara/ src/depara/ src/datagrapho/ tests/
 
 db-shell:
 	python manage.py dbshell
