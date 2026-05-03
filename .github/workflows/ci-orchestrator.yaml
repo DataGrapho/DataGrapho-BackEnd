@@ -5,9 +5,8 @@ on:
   push:
     branches:
       - 'feature/**'
+  push:
     branches-ignore:
-      - 'release/**'
-      - 'main'
       - 'feature/fe-pipeline'
   pull_request:
     types:

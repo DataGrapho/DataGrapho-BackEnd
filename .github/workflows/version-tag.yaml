@@ -3,14 +3,11 @@ name: Code-Version-Tag
 on:
   workflow_call:
 
-env:
-  checkout_hash: ${{ vars.ACTIONS_CHECKOUT_HASH }}
-
 jobs:
   tag:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@$checkout_hash
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
 

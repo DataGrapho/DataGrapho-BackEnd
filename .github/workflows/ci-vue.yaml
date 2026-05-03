@@ -3,19 +3,15 @@ name: CI-Vue-App
 on:
   workflow_call:
 
-env:
-  checkout_hash: ${{ vars.ACTIONS_CHECKOUT_HASH }}
-  node_setup_hash: ${{ vars.ACTIONS_NODE_SETUP_HASH }}
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo
-        uses: actions/checkout@$checkout_hash
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: setup node
-        uses: actions/setup-node@$node_setup_hash
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
           node-version: '25'
           cache: 'npm'

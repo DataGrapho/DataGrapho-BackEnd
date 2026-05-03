@@ -8,22 +8,15 @@ on:
       DOCKERHUB_TOKEN:
         required: true
 
-env:
-  checkout_hash: ${{ vars.ACTIONS_CHECKOUT_HASH }}
-  hadolint_hash: ${{ vars.ACTIONS_HADOLINT_HASH }}
-  dockerlogin_hash: ${{ vars.ACTIONS_DOCKERLOGIN_HASH }}
-  dockerbuildpush_hash: ${{ vars.ACTIONS_DOCKERBUILDPUSH_HASH }}
-  trivyscan_hash: ${{ vars.ACTIONS_TRIVYSCAN_HASH }}
-
 jobs:
   docker-lint:
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo
-        uses: actions/checkout@$checkout_hash
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: dockerfile lint
-        uses: hadolint/hadolint-action@$hadolint_hash
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5
         with:
           dockerfile: Dockerfile
 
@@ -32,22 +25,22 @@ jobs:
     needs: docker-lint
     steps:
       - name: checkout repo
-        uses: actions/checkout@$checkout_hash
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: docker login
-        uses: docker/login-action@$dockerlogin_hash
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: docker build and push
-        uses: docker/build-push-action@$dockerbuildpush_hash
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
         with:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/datagrapho-fe:${{ github.sha }}
 
       - name: trivy vulnerability scan
-        uses: aquasecurity/trivy-action@$trivyscan_hash
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/datagrapho-fe:${{ github.sha }}'
           format: 'table'

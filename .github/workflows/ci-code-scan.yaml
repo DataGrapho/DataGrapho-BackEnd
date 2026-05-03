@@ -12,19 +12,15 @@ on:
       SONAR_SOURCES:
         required: true
 
-env:
-  checkout_hash: ${{ vars.ACTIONS_CHECKOUT_HASH }}
-  sonarscanner_hash: ${{ vars.ACTIONS_SONARSCANNER_HASH }}
-
 jobs:
   sonarqube-scan:
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo
-        uses: actions/checkout@$checkout_hash
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: sonar-scanner
-        uses: sonarsource/sonarqube-scan-action@$sonarscanner_hash
+        uses: sonarsource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -40,7 +36,7 @@ jobs:
     if: (github.actor != 'dependabot[bot]')
     steps:
       - name: checkout repo
-        uses: actions/checkout@$checkout_hash
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: semgrep scan
         run: semgrep scan --config auto
