@@ -16,15 +16,12 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  sshaction_hash: ${{ vars.ACTIONS_SSHACTION_HASH }}
-
 jobs:
   deploy-fe:
     runs-on: ubuntu-latest
     steps:
       - name: ssh deploy
-        uses: appleboy/ssh-action@$sshaction_hash
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
