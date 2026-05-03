@@ -17,12 +17,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci-vue:
-    uses: ./.github/workflows/ci-vue.yaml
+  ci-python:
+    uses: ./.github/workflows/ci-python.yaml
 
   ci-code-scan:
     uses: ./.github/workflows/ci-code-scan.yaml
-    needs: ci-vue
+    needs: ci-python
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

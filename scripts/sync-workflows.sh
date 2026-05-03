@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SOURCE_BRANCH="infra/frontend-cicd"
+SOURCE_BRANCH="infra/backend-cicd"
 REMOTE="origin"
 
 echo "Fetching all remote branches..."
