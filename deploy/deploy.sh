@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-IMAGE="${DOCKERHUB_USERNAME}/datagrapho-fe:${IMAGE_TAG}"
-CONTAINER_NAME="datagrapho-fe"
+IMAGE="${DOCKERHUB_USERNAME}/datagrapho-be:${IMAGE_TAG}"
+CONTAINER_NAME="datagrapho-be"
 HOST_PORT="${HOST_PORT}"
 CONTAINER_PORT="${CONTAINER_PORT}"
 NETWORK="${NETWORK_NAME}"
