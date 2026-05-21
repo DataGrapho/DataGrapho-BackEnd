@@ -30,4 +30,4 @@ jobs:
           script: |
             export HOST_PORT=8000
             export CONTAINER_PORT=8000
-            deploy/deploy.sh datagrapho-be
+            ~/deploy/deploy.sh datagrapho-be
