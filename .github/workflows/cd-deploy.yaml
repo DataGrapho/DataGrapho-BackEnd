@@ -27,4 +27,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: deploy/deploy.sh datagrapho-be
+          script: |
+            export HOST_PORT=8000
+            export CONTAINER_PORT=8000
+            ~/deploy/deploy.sh datagrapho-be
