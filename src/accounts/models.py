@@ -168,3 +168,22 @@ class UsuarioAcesso(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover
         return f"{self.usuario.email} @ {self.empresa.nome}"
+
+
+class PasswordResetToken(models.Model):
+    id = models.AutoField(primary_key=True)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, db_column="id_usuario", related_name="password_reset_tokens")
+    token_hash = models.CharField(max_length=64, unique=True)
+    criado_em = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField()
+    usado_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "password_reset_token"
+        indexes = [
+            models.Index(fields=["token_hash"], name="idx_password_reset_token_hash"),
+            models.Index(fields=["expires_at"], name="idx_password_reset_expires"),
+        ]
+
+    def is_expired(self) -> bool:
+        return timezone.now() >= self.expires_at

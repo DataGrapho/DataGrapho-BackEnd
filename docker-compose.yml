@@ -1,46 +1,49 @@
-version: "3.9"
+version: '3.8'
 
 services:
-
   db:
-    image: postgres:17
-    container_name: datagrapho-db
-    restart: always
-    env_file:
-      - .env
+    image: postgres:15-alpine
+    container_name: datagrapho_postgres
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: datagrapho
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
-      - datagrapho_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  backend:
-    image: datagrapho-backend
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: datagrapho-backend
-    restart: always
-    # volumes:
-    #   - .:/app
+  web:
+    build: .
+    container_name: datagrapho_django
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py seed_test_user &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    environment:
+      - DEBUG=True
+      - PYTHONPATH=/app/src
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:4173}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:4173}
+      - FRONTEND_PASSWORD_RESET_URL=${FRONTEND_PASSWORD_RESET_URL:-http://localhost:4173/reset-password?token={token}}
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=datagrapho
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
     depends_on:
-      - db
-
-  # frontend:
-  #   build: ./frontend
-  #   container_name: datagrapho-frontend
-  #   restart: always
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     - backend
+      db:
+        condition: service_healthy
 
 volumes:
-  datagrapho_postgres_data:
+  postgres_data:

@@ -1,21 +1,28 @@
-FROM python:3.12-slim
+FROM python:3.11-slim
 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
+
+# Set work directory
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y gcc libpq-dev netcat-openbsd && rm -rf /var/lib/apt/lists/*
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+# Install Python dependencies
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy project
+COPY . /app/
 
-COPY . .
-
-COPY entrypoint.sh /app/entrypoint.sh
-
-RUN chmod +x /app/entrypoint.sh
-
+# Expose port
 EXPOSE 8000
 
-# CMD [ "sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000" ]
-
-CMD ["sh", "/app/entrypoint.sh"]
+# Run Django application
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
