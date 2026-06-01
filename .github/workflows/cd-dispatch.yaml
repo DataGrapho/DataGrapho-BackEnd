@@ -7,16 +7,15 @@ on:
         description: "Branch a ser deployada"
         required: true
         default: "main"
-
-secrets:
-  SSH_HOST:
-    required: true
-  SSH_USERNAME:
-    required: true
-  SSH_PRIVATE_KEY:
-    required: true
-  SSH_PORT:
-    required: true
+    secrets:
+      SSH_HOST:
+        required: true
+      SSH_USERNAME:
+        required: true
+      SSH_PRIVATE_KEY:
+        required: true
+      SSH_PORT:
+        required: true
 
 concurrency:
   group: build-${{ github.ref }}
