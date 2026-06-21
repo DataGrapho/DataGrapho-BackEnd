@@ -21,7 +21,7 @@ SECRET_KEY = os.getenv(
 
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-allowed_hosts_env = os.getenv('ALLOWED_HOSTS', 'pendengas.com.br,localhost,127.0.0.1')
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 
 
@@ -132,7 +132,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'https://pendengas.com.br').split(',')
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
     if origin.strip()
 ]
 
@@ -153,7 +153,7 @@ CSRF_TRUSTED_ORIGINS = [
 PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES = int(os.getenv('PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES', '30'))
 FRONTEND_PASSWORD_RESET_URL = os.getenv(
     'FRONTEND_PASSWORD_RESET_URL',
-    'https://pendengas.com.br/reset-password?token={token}',
+    'http://localhost:3000/reset-password?token={token}',
 )
 
 # Email configuration
