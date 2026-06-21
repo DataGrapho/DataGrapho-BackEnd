@@ -134,7 +134,7 @@ CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
         'CORS_ALLOWED_ORIGINS',
-        'http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000',
+        'http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000,https://pendengas.com.br',
     ).split(',')
     if origin.strip()
 ]
@@ -144,7 +144,7 @@ CORS_ALLOW_CREDENTIALS = os.getenv('CORS_ALLOW_CREDENTIALS', 'True') == 'True'
 PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES = int(os.getenv('PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES', '30'))
 FRONTEND_PASSWORD_RESET_URL = os.getenv(
     'FRONTEND_PASSWORD_RESET_URL',
-    'http://localhost:3000/reset-password?token={token}',
+    'https://pendengas.com.br/reset-password?token={token}',
 )
 
 # Email configuration
