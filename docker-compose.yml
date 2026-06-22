@@ -6,14 +6,14 @@ services:
     container_name: datagrapho_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-datagrapho}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-datagrapho}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-datagrapho}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +38,7 @@ services:
       - FRONTEND_PASSWORD_RESET_URL=${FRONTEND_PASSWORD_RESET_URL:-http://localhost:4173/reset-password?token={token}}
       - DB_ENGINE=django.db.backends.postgresql
       - DB_NAME=${DB_NAME:-datagrapho}
-      - DB_USER=${DB_USER:-postgres}
+      - DB_USER=${DB_USER:-datagrapho}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_HOST=db
       - DB_PORT=5432
