@@ -37,13 +37,11 @@ class MeView(APIView):
 
 
 class RegisterView(APIView):
-    """Create a new user account."""
+    """Create a user account as an authenticated administrator only."""
     serializer_class = RegisterDto # garente que use o DTO certo *Rafa passou aqui
-
-    def get_permissions(self):
-        if getattr(settings, "DEBUG", False):
-            return [AllowAny()]
-        return [IsAdminUser()]
+    # A rota nunca deve se tornar pública por causa de uma configuração de
+    # ambiente.  O JWT deve pertencer a um usuário com ``is_staff=True``.
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
         """Register a new user with optional access records."""

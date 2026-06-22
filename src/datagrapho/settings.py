@@ -19,7 +19,9 @@ SECRET_KEY = os.getenv(
     'django-insecure-e9&$42kn^5kt$(l)@het&r(0=3i(9qgpb*u$88ssd24=#k+26z',
 )
 
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+# Ambiente de produção deve falhar fechado: habilite DEBUG apenas de forma
+# explícita no ambiente local.
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 allowed_hosts_env = os.getenv('ALLOWED_HOSTS', 'pendengas.com.br,localhost,127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]

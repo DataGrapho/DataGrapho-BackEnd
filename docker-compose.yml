@@ -30,7 +30,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=${DEBUG:-True}
+      - DEBUG=${DEBUG:-False}
       - PYTHONPATH=/app/src
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,pendengas.com.br}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://pendengas.com.br}
