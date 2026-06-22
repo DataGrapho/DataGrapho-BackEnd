@@ -32,10 +32,10 @@ services:
     environment:
       - DEBUG=${DEBUG:-True}
       - PYTHONPATH=/app/src
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:4173}
-      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:4173}
-      - FRONTEND_PASSWORD_RESET_URL=${FRONTEND_PASSWORD_RESET_URL:-http://localhost:4173/reset-password?token={token}}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,pendengas.com.br}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://pendengas.com.br}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-https://pendengas.com.br}
+      - FRONTEND_PASSWORD_RESET_URL=${FRONTEND_PASSWORD_RESET_URL:-https://pendengas.com.br/reset-password?token={token}}
       - DB_ENGINE=django.db.backends.postgresql
       - DB_NAME=${DB_NAME:-datagrapho}
       - DB_USER=${DB_USER:-datagrapho}
