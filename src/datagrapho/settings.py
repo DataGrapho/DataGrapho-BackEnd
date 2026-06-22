@@ -77,8 +77,8 @@ DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
         'NAME': os.getenv('DB_NAME', str(PROJECT_ROOT / 'db.sqlite3')),
-        'USER': os.getenv('DB_USER', ''),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
         'HOST': os.getenv('DB_HOST', ''),
         'PORT': os.getenv('DB_PORT', ''),
     }
