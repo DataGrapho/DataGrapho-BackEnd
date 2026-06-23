@@ -5,15 +5,15 @@ services:
     image: postgres:15-alpine
     container_name: datagrapho_postgres
     environment:
-      POSTGRES_DB: datagrapho
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-datagrapho}
+      POSTGRES_USER: ${POSTGRES_USER:-datagrapho}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-datagrapho}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,15 +30,16 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=True
+      - DEBUG=${DEBUG:-False}
       - PYTHONPATH=/app/src
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:4173}
-      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:4173}
-      - FRONTEND_PASSWORD_RESET_URL=${FRONTEND_PASSWORD_RESET_URL:-http://localhost:4173/reset-password?token={token}}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,pendengas.com.br}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://pendengas.com.br}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-https://pendengas.com.br}
+      - FRONTEND_PASSWORD_RESET_URL=${FRONTEND_PASSWORD_RESET_URL:-https://pendengas.com.br/reset-password?token={token}}
       - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=datagrapho
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - DB_NAME=${DB_NAME:-datagrapho}
+      - DB_USER=${DB_USER:-datagrapho}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_HOST=db
       - DB_PORT=5432
     depends_on:
