@@ -82,6 +82,10 @@ class ForgotPasswordView(APIView):
             )
 
             reset_link = self._build_reset_link(token)
+
+            print("RESET TOKEN:", token)
+            print("RESET LINK:", reset_link)
+
             send_mail(
                 subject="Recuperacao de senha",
                 message=(
