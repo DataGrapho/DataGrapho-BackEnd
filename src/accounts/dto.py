@@ -58,7 +58,7 @@ class UsuarioMeDto(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id_usuario", "cpf", "email", "nome", "is_active", "data_criacao", "last_login")
+        fields = ("id_usuario", "cpf", "email", "nome", "is_active", "is_superuser", "data_criacao", "last_login")
 
 
 class LoginTokenDto(TokenObtainPairSerializer):
@@ -103,6 +103,7 @@ class RegisterDto(serializers.Serializer):
     nome = serializers.CharField(max_length=200)
     password = serializers.CharField(min_length=6, write_only=True)
     is_active = serializers.BooleanField(required=False, default=True)
+    is_superuser = serializers.BooleanField(required=False, default=False)
     acessos = UsuarioAcessoCreateDto(many=True, required=False)
 
     def validate_email(self, value: str):
