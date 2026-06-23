@@ -9,13 +9,30 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .dto import ForgotPasswordDto, LoginTokenDto, RegisterDto, ResetPasswordDto, UsuarioAcessoDto, UsuarioMeDto
-from .models import PasswordResetToken
+from .dto import (
+    EmpresaDto,
+    EmpresaListDto,
+    FilialDto,
+    FilialListDto,
+    ForgotPasswordDto,
+    LoginTokenDto,
+    PerfilDto,
+    PerfilListDto,
+    RegisterDto,
+    ResetPasswordDto,
+    SetorDto,
+    SetorListDto,
+    UsuarioAcessoDto,
+    UsuarioMeDto,
+)
+from .models import Empresa, Filial, PasswordResetToken, Perfil, Setor
 
 
 User = get_user_model()
@@ -146,3 +163,427 @@ class ResetPasswordView(APIView):
             reset_token.save(update_fields=["usado_em"])
 
         return Response({"detail": "Senha redefinida com sucesso."}, status=200)
+
+
+class EmpresaViewSet(viewsets.ModelViewSet):
+    """ViewSet to manage Empresa CRUD operations."""
+
+    queryset = Empresa.objects.all()
+    serializer_class = EmpresaDto
+    permission_classes = [IsAdminUser]
+    lookup_field = "id_empresa"
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return EmpresaListDto
+        return EmpresaDto
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "success": True,
+                "count": len(queryset),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(
+            {
+                "success": True,
+                "message": "Empresa criada com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(
+            {
+                "success": True,
+                "message": "Empresa atualizada com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Empresa removida com sucesso",
+            },
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+    @action(detail=True, methods=["post"])
+    def activate(self, request, id_empresa=None):
+        instance = self.get_object()
+        instance.ativo = True
+        instance.save(update_fields=["ativo"])
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Empresa ativada com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"])
+    def deactivate(self, request, id_empresa=None):
+        instance = self.get_object()
+        instance.ativo = False
+        instance.save(update_fields=["ativo"])
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Empresa desativada com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class FilialViewSet(viewsets.ModelViewSet):
+    """ViewSet to manage Filial CRUD operations."""
+
+    queryset = Filial.objects.all()
+    serializer_class = FilialDto
+    permission_classes = [IsAdminUser]
+    lookup_field = "id_filial"
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return FilialListDto
+        return FilialDto
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "success": True,
+                "count": len(queryset),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(
+            {
+                "success": True,
+                "message": "Filial criada com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(
+            {
+                "success": True,
+                "message": "Filial atualizada com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Filial removida com sucesso",
+            },
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+    @action(detail=True, methods=["post"])
+    def activate(self, request, id_filial=None):
+        instance = self.get_object()
+        instance.ativo = True
+        instance.save(update_fields=["ativo"])
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Filial ativada com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"])
+    def deactivate(self, request, id_filial=None):
+        instance = self.get_object()
+        instance.ativo = False
+        instance.save(update_fields=["ativo"])
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Filial desativada com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class SetorViewSet(viewsets.ModelViewSet):
+    """ViewSet to manage Setor CRUD operations."""
+
+    queryset = Setor.objects.all()
+    serializer_class = SetorDto
+    permission_classes = [IsAdminUser]
+    lookup_field = "id_setor"
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return SetorListDto
+        return SetorDto
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "success": True,
+                "count": len(queryset),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(
+            {
+                "success": True,
+                "message": "Setor criado com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(
+            {
+                "success": True,
+                "message": "Setor atualizado com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Setor removido com sucesso",
+            },
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+    @action(detail=True, methods=["post"])
+    def activate(self, request, id_setor=None):
+        instance = self.get_object()
+        instance.ativo = True
+        instance.save(update_fields=["ativo"])
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Setor ativado com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"])
+    def deactivate(self, request, id_setor=None):
+        instance = self.get_object()
+        instance.ativo = False
+        instance.save(update_fields=["ativo"])
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Setor desativado com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PerfilViewSet(viewsets.ModelViewSet):
+    """ViewSet to manage Perfil CRUD operations."""
+
+    queryset = Perfil.objects.all()
+    serializer_class = PerfilDto
+    permission_classes = [IsAdminUser]
+    lookup_field = "id_perfil"
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return PerfilListDto
+        return PerfilDto
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "success": True,
+                "count": len(queryset),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(
+            {
+                "success": True,
+                "message": "Perfil criado com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(
+            {
+                "success": True,
+                "message": "Perfil atualizado com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Perfil removido com sucesso",
+            },
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+    @action(detail=True, methods=["post"])
+    def activate(self, request, id_perfil=None):
+        instance = self.get_object()
+        instance.ativo = True
+        instance.save(update_fields=["ativo"])
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Perfil ativado com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"])
+    def deactivate(self, request, id_perfil=None):
+        instance = self.get_object()
+        instance.ativo = False
+        instance.save(update_fields=["ativo"])
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Perfil desativado com sucesso",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
