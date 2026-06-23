@@ -13,25 +13,53 @@ User = get_user_model()
 class EmpresaDto(serializers.ModelSerializer):
     class Meta:
         model = Empresa
-        fields = ("id_empresa", "nome", "cnpj")
+        fields = ["id_empresa", "nome", "cnpj", "endereco", "ativo", "criado_em"]
+        read_only_fields = ["id_empresa", "criado_em"]
+
+
+class EmpresaListDto(serializers.ModelSerializer):
+    class Meta:
+        model = Empresa
+        fields = ["id_empresa", "nome", "cnpj", "ativo"]
 
 
 class FilialDto(serializers.ModelSerializer):
     class Meta:
         model = Filial
-        fields = ("id_filial", "nome")
+        fields = ["id_filial", "empresa", "nome", "endereco", "ativo", "criado_em"]
+        read_only_fields = ["id_filial", "criado_em"]
+
+
+class FilialListDto(serializers.ModelSerializer):
+    class Meta:
+        model = Filial
+        fields = ["id_filial", "empresa", "nome", "ativo"]
 
 
 class SetorDto(serializers.ModelSerializer):
     class Meta:
         model = Setor
-        fields = ("id_setor", "nome")
+        fields = ["id_setor", "filial", "nome", "descricao", "ativo"]
+        read_only_fields = ["id_setor"]
+
+
+class SetorListDto(serializers.ModelSerializer):
+    class Meta:
+        model = Setor
+        fields = ["id_setor", "filial", "nome", "ativo"]
 
 
 class PerfilDto(serializers.ModelSerializer):
     class Meta:
         model = Perfil
-        fields = ("id_perfil", "nome")
+        fields = ["id_perfil", "nome", "descricao", "ativo"]
+        read_only_fields = ["id_perfil"]
+
+
+class PerfilListDto(serializers.ModelSerializer):
+    class Meta:
+        model = Perfil
+        fields = ["id_perfil", "nome", "ativo"]
 
 
 class UsuarioAcessoDto(serializers.ModelSerializer):
