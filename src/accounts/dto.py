@@ -6,6 +6,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import Empresa, Filial, Perfil, Setor, UsuarioAcesso
 
+
 User = get_user_model()
 
 
@@ -85,16 +86,7 @@ class UsuarioMeDto(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = (
-            "id_usuario",
-            "cpf",
-            "email",
-            "nome",
-            "is_active",
-            "is_superuser",
-            "data_criacao",
-            "last_login",
-        )
+        fields = ("id_usuario", "cpf", "email", "nome", "is_active", "is_superuser", "data_criacao", "last_login")
 
 
 class LoginTokenDto(TokenObtainPairSerializer):
@@ -129,9 +121,7 @@ class UsuarioAcessoCreateDto(serializers.Serializer):
         id_filial = attrs.get("id_filial")
         id_setor = attrs.get("id_setor")
         if id_setor is not None and id_filial is None:
-            raise serializers.ValidationError(
-                "Se id_setor for informado, id_filial também deve ser informado."
-            )
+            raise serializers.ValidationError("Se id_setor for informado, id_filial tamb├®m deve ser informado.")
         return attrs
 
 
@@ -146,12 +136,12 @@ class RegisterDto(serializers.Serializer):
 
     def validate_email(self, value: str):
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email já cadastrado.")
+            raise serializers.ValidationError("Email j├í cadastrado.")
         return value
 
     def validate_cpf(self, value: str):
         if User.objects.filter(cpf=value).exists():
-            raise serializers.ValidationError("CPF já cadastrado.")
+            raise serializers.ValidationError("CPF j├í cadastrado.")
         return value
 
     def create(self, validated_data):
@@ -170,9 +160,7 @@ class RegisterDto(serializers.Serializer):
             setor = None
             if acesso.get("id_setor") is not None:
                 if filial is None:
-                    raise serializers.ValidationError(
-                        "Se id_setor for informado, id_filial também deve ser informado."
-                    )
+                    raise serializers.ValidationError("Se id_setor for informado, id_filial tamb├®m deve ser informado.")
                 setor = Setor.objects.get(id_setor=acesso["id_setor"], filial=filial)
             perfil = Perfil.objects.get(id_perfil=acesso["id_perfil"])
 
@@ -201,5 +189,5 @@ class ResetPasswordDto(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs["password"] != attrs["confirmPassword"]:
-            raise serializers.ValidationError({"confirmPassword": ["As senhas não conferem."]})
+            raise serializers.ValidationError({"confirmPassword": ["As senhas n├úo conferem."]})
         return attrs
