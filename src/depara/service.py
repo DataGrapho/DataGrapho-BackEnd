@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from django.db import transaction
 
@@ -102,7 +102,7 @@ class DeparaService:
         Returns:
             List of DePara instances
         """
-        filters = {}
+        filters: Dict[str, Any] = {}
 
         if id_catalogo is not None:
             filters["id_catalogo"] = id_catalogo

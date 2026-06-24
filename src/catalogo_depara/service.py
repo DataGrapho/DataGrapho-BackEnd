@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from django.db import transaction
 
@@ -77,7 +77,7 @@ class CatalogoDeparaService:
         Returns:
             List of CatalogoDePara instances
         """
-        filters = {}
+        filters: Dict[str, Any] = {}
 
         if ativo is not None:
             filters["ativo"] = ativo
