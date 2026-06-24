@@ -11,7 +11,7 @@ from .service import DeparaService
 
 class DeparaViewSet(viewsets.ModelViewSet):
     """Manage DePara - data mapping definitions with hierarchical levels.
-    
+
     List all mappings, create new ones, and manage individual mapping details.
     Supports filtering by catalog, status, and search terms.
     Supports hierarchical mappings through id_depara_pai (parent mapping).
@@ -34,7 +34,7 @@ class DeparaViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """List all mappings with optional filtering.
-        
+
         Query parameters:
         - id_catalogo: Filter by catalog ID
         - ativo: Filter by status (true/false)
@@ -72,7 +72,9 @@ class DeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def create(self, request, *args, **kwargs):
         """Create a new mapping with optional parent mapping for hierarchical levels."""
@@ -93,7 +95,9 @@ class DeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def retrieve(self, request, *args, **kwargs):
         """Get a specific mapping by ID with all its details."""
@@ -115,7 +119,9 @@ class DeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": True, "data": serializer.data}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def update(self, request, *args, **kwargs):
         """Update a mapping (full update)."""
@@ -148,7 +154,9 @@ class DeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def partial_update(self, request, *args, **kwargs):
         """Partial update a mapping."""
@@ -179,7 +187,9 @@ class DeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=["get"])
     def total_count(self, request):
@@ -197,7 +207,9 @@ class DeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": True, "total": count}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=["get"])
     def by_catalogo(self, request):
@@ -226,7 +238,9 @@ class DeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=["post"])
     def activate(self, request, id_depara=None):
@@ -254,7 +268,9 @@ class DeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=["post"])
     def deactivate(self, request, id_depara=None):
@@ -282,4 +298,6 @@ class DeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

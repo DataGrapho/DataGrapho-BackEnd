@@ -8,30 +8,38 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0001_initial'),
+        ("accounts", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PasswordResetToken',
+            name="PasswordResetToken",
             fields=[
-                ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('token_hash', models.CharField(max_length=64, unique=True)),
-                ('criado_em', models.DateTimeField(default=django.utils.timezone.now)),
-                ('expires_at', models.DateTimeField()),
-                ('usado_em', models.DateTimeField(blank=True, null=True)),
-                ('usuario', models.ForeignKey(db_column='id_usuario', on_delete=django.db.models.deletion.CASCADE, related_name='password_reset_tokens', to='accounts.usuario')),
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("token_hash", models.CharField(max_length=64, unique=True)),
+                ("criado_em", models.DateTimeField(default=django.utils.timezone.now)),
+                ("expires_at", models.DateTimeField()),
+                ("usado_em", models.DateTimeField(blank=True, null=True)),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        db_column="id_usuario",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="password_reset_tokens",
+                        to="accounts.usuario",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'password_reset_token',
+                "db_table": "password_reset_token",
             },
         ),
         migrations.AddIndex(
-            model_name='passwordresettoken',
-            index=models.Index(fields=['token_hash'], name='idx_password_reset_token_hash'),
+            model_name="passwordresettoken",
+            index=models.Index(fields=["token_hash"], name="idx_password_reset_token_hash"),
         ),
         migrations.AddIndex(
-            model_name='passwordresettoken',
-            index=models.Index(fields=['expires_at'], name='idx_password_reset_expires'),
+            model_name="passwordresettoken",
+            index=models.Index(fields=["expires_at"], name="idx_password_reset_expires"),
         ),
     ]

@@ -34,18 +34,19 @@ from .dto import (
 )
 from .models import Empresa, Filial, PasswordResetToken, Perfil, Setor
 
-
 User = get_user_model()
 
 
 class LoginView(TokenObtainPairView):
     """Login endpoint - obtain JWT access and refresh tokens."""
+
     serializer_class = LoginTokenDto
 
 
 class MeView(APIView):
     """Get current authenticated user information."""
-    serializer_class = UsuarioMeDto # garente que use o DTO certo *Rafa passou aqui
+
+    serializer_class = UsuarioMeDto  # garente que use o DTO certo *Rafa passou aqui
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -55,7 +56,8 @@ class MeView(APIView):
 
 class RegisterView(APIView):
     """Create a user account as an authenticated administrator only."""
-    serializer_class = RegisterDto # garente que use o DTO certo *Rafa passou aqui
+
+    serializer_class = RegisterDto  # garente que use o DTO certo *Rafa passou aqui
     # A rota nunca deve se tornar pública por causa de uma configuração de
     # ambiente.  O JWT deve pertencer a um usuário com ``is_staff=True``.
     permission_classes = [IsAdminUser]
@@ -115,7 +117,10 @@ class ForgotPasswordView(APIView):
                 fail_silently=True,
             )
 
-        return Response({"detail": "Se o e-mail estiver cadastrado, enviaremos as instrucoes de recuperacao."}, status=200)
+        return Response(
+            {"detail": "Se o e-mail estiver cadastrado, enviaremos as instrucoes de recuperacao."},
+            status=200,
+        )
 
     @staticmethod
     def _build_reset_link(token: str) -> str:

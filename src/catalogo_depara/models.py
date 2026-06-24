@@ -2,7 +2,6 @@ from django.db import models
 
 
 class CatalogoDePara(models.Model):
-
     """Model for Catálogo DePara entity.
 
     Represents a catalog that maps the origin table information
