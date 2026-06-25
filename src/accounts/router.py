@@ -12,11 +12,13 @@ from .controller import (
     RegisterView,
     ResetPasswordView,
     SetorViewSet,
+    UsuarioViewSet,
 )
 
 app_name = "accounts"
 
 router = DefaultRouter()
+router.register(r"usuarios", UsuarioViewSet, basename="usuario")
 router.register(r"empresas", EmpresaViewSet, basename="empresa")
 router.register(r"filiais", FilialViewSet, basename="filial")
 router.register(r"setores", SetorViewSet, basename="setor")
