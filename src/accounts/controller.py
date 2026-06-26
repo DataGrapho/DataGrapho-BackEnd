@@ -22,6 +22,7 @@ from .dto import (
     FilialDto,
     FilialListDto,
     ForgotPasswordDto,
+    get_admin_company_ids,
     LoginTokenDto,
     PerfilDto,
     PerfilListDto,
@@ -30,23 +31,24 @@ from .dto import (
     SetorDto,
     SetorListDto,
     UsuarioAcessoDto,
+    UsuarioListDto,
     UsuarioMeDto,
+    UsuarioUpdateDto,
 )
-from .models import Empresa, Filial, PasswordResetToken, Perfil, Setor
+from .models import Empresa, Filial, PasswordResetToken, Perfil, Setor, UsuarioAcesso
+
 
 User = get_user_model()
 
 
 class LoginView(TokenObtainPairView):
     """Login endpoint - obtain JWT access and refresh tokens."""
-
     serializer_class = LoginTokenDto
 
 
 class MeView(APIView):
     """Get current authenticated user information."""
-
-    serializer_class = UsuarioMeDto  # garente que use o DTO certo *Rafa passou aqui
+    serializer_class = UsuarioMeDto # garente que use o DTO certo *Rafa passou aqui
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -56,15 +58,14 @@ class MeView(APIView):
 
 class RegisterView(APIView):
     """Create a user account as an authenticated administrator only."""
-
-    serializer_class = RegisterDto  # garente que use o DTO certo *Rafa passou aqui
-    # A rota nunca deve se tornar pública por causa de uma configuração de
-    # ambiente.  O JWT deve pertencer a um usuário com ``is_staff=True``.
+    serializer_class = RegisterDto # garente que use o DTO certo *Rafa passou aqui
+    # A rota nunca deve se tornar p├║blica por causa de uma configura├º├úo de
+    # ambiente.  O JWT deve pertencer a um usu├írio com ``is_staff=True``.
     permission_classes = [IsAdminUser]
 
     def post(self, request):
         """Register a new user with optional access records."""
-        serializer = RegisterDto(data=request.data)
+        serializer = RegisterDto(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         user, acessos = serializer.save()
 
@@ -117,10 +118,7 @@ class ForgotPasswordView(APIView):
                 fail_silently=True,
             )
 
-        return Response(
-            {"detail": "Se o e-mail estiver cadastrado, enviaremos as instrucoes de recuperacao."},
-            status=200,
-        )
+        return Response({"detail": "Se o e-mail estiver cadastrado, enviaremos as instrucoes de recuperacao."}, status=200)
 
     @staticmethod
     def _build_reset_link(token: str) -> str:
@@ -168,6 +166,84 @@ class ResetPasswordView(APIView):
             reset_token.save(update_fields=["usado_em"])
 
         return Response({"detail": "Senha redefinida com sucesso."}, status=200)
+
+
+class UsuarioViewSet(viewsets.ModelViewSet):
+    """ViewSet to list and update user accounts for staff administrators."""
+
+    queryset = User.objects.all().order_by("-data_criacao")
+    serializer_class = UsuarioListDto
+    permission_classes = [IsAdminUser]
+    lookup_field = "id_usuario"
+    http_method_names = ["get", "patch", "delete", "head", "options"]
+
+    def get_serializer_class(self):
+        if self.action in {"partial_update", "update"}:
+            return UsuarioUpdateDto
+        return UsuarioListDto
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_superuser:
+            return queryset
+
+        empresa_ids = get_admin_company_ids(user)
+        if not empresa_ids:
+            return queryset.none()
+
+        return queryset.filter(acessos__empresa_id__in=empresa_ids).distinct()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {
+                "success": True,
+                "count": len(queryset),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        instance.refresh_from_db()
+        return Response(
+            {
+                "success": True,
+                "message": "Usu├írio atualizado com sucesso",
+                "data": UsuarioListDto(instance).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        with transaction.atomic():
+            instance.acessos.all().delete()
+            self.perform_destroy(instance)
+        return Response(
+            {
+                "success": True,
+                "message": "Usu├írio removido com sucesso",
+            },
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
 
 class EmpresaViewSet(viewsets.ModelViewSet):
