@@ -28,19 +28,20 @@ ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",") if host.s
 
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "rest_framework",
-    "rest_framework_simplejwt",
-    "drf_spectacular",
-    "corsheaders",
-    "accounts",
-    "catalogo_depara",
-    "depara",
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_spectacular',
+    'corsheaders',
+    'accounts',
+    'catalogo_depara',
+    'depara',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
@@ -95,8 +96,20 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-LANGUAGE_CODE = os.getenv("LANGUAGE_CODE", "pt-br")
-TIME_ZONE = os.getenv("TIME_ZONE", "America/Sao_Paulo")
+# Cache configuration for chatbot session storage
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'chatbot-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
+
+
+LANGUAGE_CODE = os.getenv('LANGUAGE_CODE', 'pt-br')
+TIME_ZONE = os.getenv('TIME_ZONE', 'America/Sao_Paulo')
 USE_I18N = True
 USE_TZ = True
 
@@ -124,6 +137,13 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': f"{int(os.getenv('CHATBOT_RATE_LIMIT', '10'))}/min",
+        'chatbot': f"{int(os.getenv('CHATBOT_RATE_LIMIT', '10'))}/min",
+    }
 }
 
 
@@ -171,4 +191,54 @@ else:
     EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
+# Chatbot Configuration
+CHATBOT_CONFIG = {
+    # Active domains - add 'hr', 'sales', etc. to enable multiple domains
+    'ACTIVE_DOMAINS': os.getenv('CHATBOT_ACTIVE_DOMAINS', 'wine').split(','),
+    
+    # AI Provider settings (generic)
+    'AI_PROVIDER': os.getenv('AI_PROVIDER', 'gemini').lower(),
+    'AI_API_KEY': os.getenv('AI_API_KEY', ''),
+    'AI_MODEL': os.getenv('AI_MODEL', 'gemini-1.5-flash'),
+    'AI_BASE_URL': os.getenv('AI_BASE_URL', None),  # For LM Studio, Ollama, etc.
+    'AI_TIMEOUT': int(os.getenv('AI_TIMEOUT', '30')),
+    'AI_MAX_RETRIES': int(os.getenv('AI_MAX_RETRIES', '3')),
+    
+    # Execution settings
+    'MAX_TOOL_CALLS_PER_QUESTION': int(os.getenv('MAX_TOOL_CALLS_PER_QUESTION', '5')),
+    'AI_TEMPERATURE': float(os.getenv('AI_TEMPERATURE', '0.0')),
+    
+    # Rate limiting and caching
+    'RATE_LIMIT': int(os.getenv('CHATBOT_RATE_LIMIT', '10')),
+    'CACHE_TTL': int(os.getenv('CHATBOT_CACHE_TTL', '300')),
+    
+    # Session management
+    'SESSION_EXPIRY': int(os.getenv('CHATBOT_SESSION_EXPIRY', '3600')),
+}
+
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'chatbot': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@datagrapho.local")

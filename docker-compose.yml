@@ -42,6 +42,19 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_HOST=db
       - DB_PORT=5432
+      # Chatbot AI Configuration
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_MODEL=${AI_MODEL:-gemini-2.0-flash}
+      - AI_BASE_URL=${AI_BASE_URL:-}
+      - AI_TIMEOUT=${AI_TIMEOUT:-30}
+      - AI_MAX_RETRIES=${AI_MAX_RETRIES:-3}
+      - AI_TEMPERATURE=${AI_TEMPERATURE:-0.0}
+      - MAX_TOOL_CALLS_PER_QUESTION=${MAX_TOOL_CALLS_PER_QUESTION:-5}
+      - CHATBOT_RATE_LIMIT=${CHATBOT_RATE_LIMIT:-10}
+      - CHATBOT_CACHE_TTL=${CHATBOT_CACHE_TTL:-300}
+      - CHATBOT_SESSION_EXPIRY=${CHATBOT_SESSION_EXPIRY:-3600}
+      - CHATBOT_ACTIVE_DOMAINS=${CHATBOT_ACTIVE_DOMAINS:-wine}
     depends_on:
       db:
         condition: service_healthy
