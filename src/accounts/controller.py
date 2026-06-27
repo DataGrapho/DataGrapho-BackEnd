@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .dto import (
+    ChangePasswordDto,
     EmpresaDto,
     EmpresaListDto,
     FilialDto,
@@ -53,7 +54,17 @@ class MeView(APIView):
 
     def get(self, request):
         """Retrieve current user profile and access information."""
-        return Response(UsuarioMeDto(request.user).data)
+        acessos = (
+            UsuarioAcesso.objects.select_related("empresa", "filial", "setor", "perfil")
+            .filter(usuario=request.user)
+            .order_by("id")
+        )
+        return Response(
+            {
+                **UsuarioMeDto(request.user).data,
+                "acessos": UsuarioAcessoDto(acessos, many=True).data,
+            }
+        )
 
 
 class RegisterView(APIView):
@@ -166,6 +177,31 @@ class ResetPasswordView(APIView):
             reset_token.save(update_fields=["usado_em"])
 
         return Response({"detail": "Senha redefinida com sucesso."}, status=200)
+
+
+class ChangePasswordView(APIView):
+    """Change password for the authenticated user."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordDto
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        current_password = serializer.validated_data["current_password"]
+        new_password = serializer.validated_data["password"]
+
+        if not request.user.check_password(current_password):
+            return Response(
+                {"current_password": ["Senha atual incorreta."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.user.set_password(new_password)
+        request.user.save(update_fields=["password"])
+
+        return Response({"detail": "Senha alterada com sucesso."}, status=status.HTTP_200_OK)
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):

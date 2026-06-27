@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .controller import (
+    ChangePasswordView,
     EmpresaViewSet,
     FilialViewSet,
     ForgotPasswordView,
@@ -31,5 +32,6 @@ urlpatterns = [
     path("me/", MeView.as_view(), name="auth-me"),
     path("password/forgot/", ForgotPasswordView.as_view(), name="auth-password-forgot"),
     path("password/reset/", ResetPasswordView.as_view(), name="auth-password-reset"),
+    path("password/change/", ChangePasswordView.as_view(), name="auth-password-change"),
     path("", include(router.urls)),
 ]

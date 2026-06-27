@@ -316,3 +316,14 @@ class ResetPasswordDto(serializers.Serializer):
         if attrs["password"] != attrs["confirmPassword"]:
             raise serializers.ValidationError({"confirmPassword": ["As senhas n├úo conferem."]})
         return attrs
+
+
+class ChangePasswordDto(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    password = serializers.CharField(min_length=6, write_only=True)
+    confirmPassword = serializers.CharField(min_length=6, write_only=True)
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["confirmPassword"]:
+            raise serializers.ValidationError({"confirmPassword": ["As senhas nao conferem."]})
+        return attrs
