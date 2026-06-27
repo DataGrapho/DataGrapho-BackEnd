@@ -56,10 +56,8 @@ INSERT INTO chatbot_fato_consumo_vinho (evento, data_consumo, vinho, uva, safra,
 INSERT INTO chatbot_fato_consumo_vinho (evento, data_consumo, vinho, uva, safra, produtor, cor, teor_acucar, teor_alcoolico, pais, regiao, opiniao, preco, qtd, qtd_otimo, total, degustacao) VALUES ('C', '2005-02-23', 'Trivento', '* Shiraz, Malbec', 2003, 'Trivento Bodegas e Vinhedos', 'Tinto', NULL, NULL, 'Argentina', 'Mendoza', '(Não Informado)', NULL, 1, NULL, NULL, NULL);
 """
 
-INSERTS = _INSERTS.replace(
-    '(evento, data_consumo, vinho, uva, safra, produtor, cor, teor_acucar, teor_alcoolico, pais, regiao, opiniao, preco, qtd, qtd_otimo, total, degustacao) VALUES (',
-    '(criado_em, atualizado_em, evento, data_consumo, vinho, uva, safra, produtor, cor, teor_acucar, teor_alcoolico, pais, regiao, opiniao, preco, qtd, qtd_otimo, total, degustacao) VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ',
-)
+# Os campos criado_em e atualizado_em serão preenchidos automaticamente
+INSERTS = _INSERTS
 
 
 class Migration(migrations.Migration):
