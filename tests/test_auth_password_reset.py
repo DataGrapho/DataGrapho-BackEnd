@@ -12,7 +12,6 @@ from rest_framework.test import APIClient
 
 from accounts.models import PasswordResetToken
 
-
 User = get_user_model()
 
 

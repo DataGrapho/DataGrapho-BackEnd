@@ -1,0 +1,27 @@
+name: Code-Version-Tag
+
+on:
+  workflow_call:
+
+jobs:
+  tag:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      - name: get next version
+        id: version
+        run: |
+          # release/1.2.3 -> 1.2.3
+          VERSION=$(echo "${{ github.head_ref }}" | sed 's/release\///')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: tag main branch
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a v${{ steps.version.outputs.version }} -m "Release version ${{ steps.version.outputs.version }}"
+          git push origin v${{ steps.version.outputs.version }}
+
