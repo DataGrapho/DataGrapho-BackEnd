@@ -163,13 +163,8 @@ PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES = int(
     os.getenv("PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES", "30")
 )
 FRONTEND_PASSWORD_RESET_URL = os.getenv(
-<<<<<<< HEAD
-    'FRONTEND_PASSWORD_RESET_URL',
-    'https://pendengas.com.br/reset-password?token={token}',
-=======
     "FRONTEND_PASSWORD_RESET_URL",
     "https://pendengas.com.br/reset-password?token={token}",
->>>>>>> 31f29bda42715d4516df02ccc1fc4cde774f3e30
 )
 
 # Email configuration
