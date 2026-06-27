@@ -134,14 +134,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
-<<<<<<< HEAD
-    for origin in os.getenv(
-        'CORS_ALLOWED_ORIGINS',
-        'http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000,https://pendengas.com.br',
-    ).split(',')
-=======
     for origin in os.getenv("CORS_ALLOWED_ORIGINS", "https://pendengas.com.br").split(",")
->>>>>>> 31f29bda42715d4516df02ccc1fc4cde774f3e30
     if origin.strip()
 ]
 
