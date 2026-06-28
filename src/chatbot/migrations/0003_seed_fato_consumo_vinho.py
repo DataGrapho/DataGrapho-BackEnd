@@ -56,11 +56,10 @@ INSERT INTO chatbot_fato_consumo_vinho (evento, data_consumo, vinho, uva, safra,
 INSERT INTO chatbot_fato_consumo_vinho (evento, data_consumo, vinho, uva, safra, produtor, cor, teor_acucar, teor_alcoolico, pais, regiao, opiniao, preco, qtd, qtd_otimo, total, degustacao) VALUES ('C', '2005-02-23', 'Trivento', '* Shiraz, Malbec', 2003, 'Trivento Bodegas e Vinhedos', 'Tinto', NULL, NULL, 'Argentina', 'Mendoza', '(Não Informado)', NULL, 1, NULL, NULL, NULL);
 """
 
-# Os campos criado_em e atualizado_em serão preenchidos automaticamente pelo Django
-# Ajustando nomes das colunas para corresponder ao db_column definido no modelo
+# Ajustando nomes das colunas e adicionando timestamps
 INSERTS = _INSERTS.replace(
-    'INSERT INTO chatbot_fato_consumo_vinho (evento, data_consumo, vinho, uva, safra, produtor, cor, teor_acucar, teor_alcoolico, pais, regiao, opiniao, preco, qtd, qtd_otimo, total, degustacao)',
-    'INSERT INTO chatbot_fato_consumo_vinho ("Evento", "DataConsumo", "Vinho", "Uva", "Safra", "Produtor", "Cor", "TeorAcucar", "TeorAlcoolico", "Pais", "Regiao", "Opiniao", "Preco", "Qtd", "QtdOtimo", "Total", "Degustacao")'
+    'INSERT INTO chatbot_fato_consumo_vinho (evento, data_consumo, vinho, uva, safra, produtor, cor, teor_acucar, teor_alcoolico, pais, regiao, opiniao, preco, qtd, qtd_otimo, total, degustacao) VALUES (',
+    'INSERT INTO chatbot_fato_consumo_vinho (criado_em, atualizado_em, "Evento", "DataConsumo", "Vinho", "Uva", "Safra", "Produtor", "Cor", "TeorAcucar", "TeorAlcoolico", "Pais", "Regiao", "Opiniao", "Preco", "Qtd", "QtdOtimo", "Total", "Degustacao") VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '
 )
 
 
