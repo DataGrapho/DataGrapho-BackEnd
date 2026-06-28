@@ -34,8 +34,48 @@ class ChatController(APIView):
         super().__init__(**kwargs)
         self.service = ChatbotService()
     
+    @staticmethod
+    def health_check(request):
+        """Endpoint de teste para verificar se o chatbot está funcionando"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            from chatbot.core.tool_registry import get_tool_registry
+            from chatbot.core.domain_loader import get_all_domain_repositories
+            from chatbot.core.ai_providers import get_ai_provider
+            from django.conf import settings
+            
+            registry = get_tool_registry()
+            tools = registry.get_all_tools()
+            repositories = get_all_domain_repositories()
+            provider = get_ai_provider()
+            
+            return Response({
+                'status': 'ok',
+                'chatbot_config': {
+                    'provider': settings.CHATBOT_CONFIG.get('AI_PROVIDER'),
+                    'model': settings.CHATBOT_CONFIG.get('AI_MODEL'),
+                    'active_domains': settings.CHATBOT_CONFIG.get('ACTIVE_DOMAINS'),
+                    'api_key_set': bool(settings.CHATBOT_CONFIG.get('AI_API_KEY')),
+                },
+                'tools_loaded': len(tools),
+                'tool_names': [t.name for t in tools],
+                'repositories_loaded': list(repositories.keys()),
+                'provider_class': provider.__class__.__name__,
+            })
+        except Exception as e:
+            logger.error(f"Health check failed: {e}", exc_info=True)
+            return Response({
+                'status': 'error',
+                'error': str(e),
+            }, status=500)
+    
     def post(self, request):
         try:
+            logger.info("=== CHAT REQUEST START ===")
+            logger.info(f"Request data: {request.data}")
+            
             request_serializer = ChatRequestSerializer(data=request.data)
             if not request_serializer.is_valid():
                 logger.warning(f"Invalid request: {request_serializer.errors}")
@@ -64,30 +104,32 @@ class ChatController(APIView):
                 f"message='{message[:50]}...'"
             )
             
-            logger.info(
-                f"AUDIT: user_id={user_id}, "
-                f"session_id={session_id}, "
-                f"action=chat_request, "
-                f"timestamp={request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR'))}"
-            )
-            
-            result = self.service.process_chat(
-                user_id=user_id,
-                message=message,
-                session_id=session_id
-            )
+            try:
+                logger.info("Calling service.process_chat...")
+                result = self.service.process_chat(
+                    user_id=user_id,
+                    message=message,
+                    session_id=session_id
+                )
+                logger.info(f"Service returned: {result}")
+            except Exception as service_error:
+                logger.error(f"ERROR in service.process_chat: {service_error}", exc_info=True)
+                raise
             
             response_serializer = ChatResponseSerializer(data=result)
             if not response_serializer.is_valid():
                 logger.error(f"Invalid response format: {response_serializer.errors}")
+                logger.error(f"Result was: {result}")
                 return Response(
                     {
                         'success': False,
-                        'error': 'Internal error: invalid response format'
+                        'error': 'Internal error: invalid response format',
+                        'details': response_serializer.errors
                     },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
             
+            logger.info("=== CHAT REQUEST SUCCESS ===")
             return Response(
                 {
                     'success': True,
@@ -97,7 +139,10 @@ class ChatController(APIView):
             )
         
         except Exception as e:
-            logger.error(f"Unexpected error in ChatController: {e}", exc_info=True)
+            logger.error(f"=== CHAT REQUEST FAILED ===")
+            logger.error(f"Exception type: {type(e).__name__}")
+            logger.error(f"Exception message: {str(e)}")
+            logger.error(f"Full traceback:", exc_info=True)
             return Response(
                 {
                     'success': False,
