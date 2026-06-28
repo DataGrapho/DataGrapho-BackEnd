@@ -175,9 +175,12 @@ class FunctionCallingEngine:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON arguments: {e}")
         
-        repository = self.repositories.get('financial')
-        if not repository:
-            raise ValueError("Financial repository not available")
+        # Get the first available domain repository
+        if not self.repositories:
+            raise ValueError("No domain repositories available")
+        
+        # Get the first repository (works with single or multiple domains)
+        repository = next(iter(self.repositories.values()))
         
         try:
             result = tool.execute(repository, **arguments)
