@@ -165,6 +165,20 @@ class SessionMessagesSerializer(serializers.Serializer):
 class SessionsController(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     
+    def create(self, request):
+        """Criar uma nova sessão de chat"""
+        try:
+            session = ChatSession.objects.create(user=request.user)
+            serializer = SessionSerializer(session)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            logger.error(f"Error creating session: {e}", exc_info=True)
+            return Response(
+                {'error': 'Failed to create session'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
     def list(self, request):
         """Listar todas as sessões do usuário"""
         try:
