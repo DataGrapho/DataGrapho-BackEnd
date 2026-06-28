@@ -3,8 +3,14 @@ import json
 import logging
 from typing import List, Dict, Any, Optional
 
-import google.generativeai as genai
-from google.api_core import exceptions as google_exceptions
+try:
+    import google.genai as genai
+    from google.genai import types
+    GENAI_NEW_API = True
+except ImportError:
+    import google.generativeai as genai
+    from google.api_core import exceptions as google_exceptions
+    GENAI_NEW_API = False
 
 from .base import AIProvider, AIMessage, AIResponse
 
