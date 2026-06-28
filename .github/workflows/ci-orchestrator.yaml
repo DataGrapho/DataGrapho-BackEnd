@@ -47,7 +47,6 @@ jobs:
       SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       SSH_PORT: ${{ secrets.SSH_PORT }}
-      AI_API_KEY: ${{ secrets.AI_API_KEY }}
     if: |
       github.event_name == 'pull_request' &&
       contains(github.head_ref, 'release/') &&
