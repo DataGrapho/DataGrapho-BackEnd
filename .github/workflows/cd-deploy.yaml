@@ -32,5 +32,4 @@ jobs:
           script: |
             export HOST_PORT=8000
             export CONTAINER_PORT=8000
-            export AI_API_KEY="${{ secrets.AI_API_KEY }}"
             ~/deploy/deploy.sh datagrapho-be
