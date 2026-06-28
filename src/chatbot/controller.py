@@ -32,7 +32,11 @@ class ChatController(APIView):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.service = ChatbotService()
+        try:
+            self.service = ChatbotService()
+        except Exception as e:
+            logger.error(f"Failed to initialize ChatbotService: {e}", exc_info=True)
+            self.service = None
     
     @staticmethod
     def health_check(request):
@@ -73,6 +77,18 @@ class ChatController(APIView):
     
     def post(self, request):
         try:
+            # Verificar se o serviço foi inicializado corretamente
+            if self.service is None:
+                logger.error("ChatbotService not initialized - AI_API_KEY may not be configured")
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Chatbot não está configurado corretamente. Verifique a configuração do AI_API_KEY.',
+                        'data': None
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
             logger.info("=== CHAT REQUEST START ===")
             logger.info(f"Request data: {request.data}")
             
@@ -146,8 +162,8 @@ class ChatController(APIView):
             return Response(
                 {
                     'success': False,
-                    'error': 'Internal server error',
-                    'message': str(e)
+                    'error': str(e) or 'Internal server error',
+                    'data': None
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
@@ -160,7 +176,7 @@ from chatbot.models import ChatSession, ChatMessage
 
 class SessionSerializer(serializers.Serializer):
     id = serializers.UUIDField(source='session_id')
-    title = serializers.CharField(required=False, allow_blank=True)
+    title = serializers.SerializerMethodField()
     createdAt = serializers.DateTimeField(source='created_at')
     updatedAt = serializers.DateTimeField(source='last_activity')
     lastMessagePreview = serializers.SerializerMethodField()
@@ -233,13 +249,17 @@ class SessionsController(viewsets.ViewSet):
                 user=request.user
             ).prefetch_related('messages').order_by('-last_activity')
             
+            logger.info(f"Found {sessions.count()} sessions for user {request.user.id}")
+            
             serializer = SessionSerializer(sessions, many=True)
+            logger.info(f"Serialized {len(serializer.data)} sessions")
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         except Exception as e:
             logger.error(f"Error listing sessions: {e}", exc_info=True)
             return Response(
-                {'error': 'Failed to list sessions'},
+                {'error': 'Failed to list sessions', 'details': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
