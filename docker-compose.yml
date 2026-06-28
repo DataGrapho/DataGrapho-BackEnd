@@ -44,7 +44,7 @@ services:
       - DB_PORT=5432
       # Chatbot AI Configuration
       - AI_PROVIDER=${AI_PROVIDER:-gemini}
-      - AI_API_KEY=${AI_API_KEY}
+      - AI_API_KEY=${AI_API_KEY:-AIzaSyC8uAcS9h4ujp6pcKnKoHD6qSJnJuG3-Ws}
       - AI_MODEL=${AI_MODEL:-gemini-1.5-flash}
       - AI_BASE_URL=${AI_BASE_URL:-}
       - AI_TIMEOUT=${AI_TIMEOUT:-30}
