@@ -16,6 +16,8 @@ on:
         required: true
       SSH_PORT:
         required: true
+      AI_API_KEY:
+        required: false
 
 concurrency:
   group: build-${{ github.ref }}
@@ -33,4 +35,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
+            export AI_API_KEY="${{ secrets.AI_API_KEY }}"
             ~/deploy/manual.sh datagrapho-be ${{ github.event.inputs.branch }}
