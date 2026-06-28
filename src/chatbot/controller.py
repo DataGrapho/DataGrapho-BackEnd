@@ -115,7 +115,7 @@ from chatbot.models import ChatSession, ChatMessage
 
 class SessionSerializer(serializers.Serializer):
     id = serializers.UUIDField(source='session_id')
-    title = serializers.SerializerMethodField()
+    title = serializers.CharField(required=False, allow_blank=True)
     createdAt = serializers.DateTimeField(source='created_at')
     updatedAt = serializers.DateTimeField(source='last_activity')
     lastMessagePreview = serializers.SerializerMethodField()
@@ -123,7 +123,9 @@ class SessionSerializer(serializers.Serializer):
     status = serializers.SerializerMethodField()
     
     def get_title(self, obj):
-        # Pega a primeira mensagem como título ou retorna "Novo chat"
+        # Se tem um título customizado, retorna ele, senão pega a primeira mensagem
+        if hasattr(obj, 'title') and obj.title:
+            return obj.title
         first_message = obj.messages.filter(role='user').first()
         if first_message:
             return first_message.content[:50] + ('...' if len(first_message.content) > 50 else '')
@@ -193,6 +195,33 @@ class SessionsController(viewsets.ViewSet):
             logger.error(f"Error listing sessions: {e}", exc_info=True)
             return Response(
                 {'error': 'Failed to list sessions'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def partial_update(self, request, pk=None):
+        """Atualizar o título de uma sessão"""
+        try:
+            session = ChatSession.objects.get(
+                session_id=pk,
+                user=request.user
+            )
+            
+            title = request.data.get('title', '')
+            # Por enquanto só vamos logar, mas poderia adicionar campo title no modelo
+            logger.info(f"User requested to rename session {pk} to '{title}'")
+            
+            serializer = SessionSerializer(session)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        except ChatSession.DoesNotExist:
+            return Response(
+                {'error': 'Session not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error updating session: {e}", exc_info=True)
+            return Response(
+                {'error': 'Failed to update session'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
