@@ -17,7 +17,11 @@ User = get_user_model()
 class ChatbotService:
     
     def __init__(self):
-        self.engine = FunctionCallingEngine()
+        try:
+            self.engine = FunctionCallingEngine()
+        except Exception as e:
+            logger.error(f"FAILED to initialize FunctionCallingEngine: {e}", exc_info=True)
+            raise RuntimeError(f"Chatbot initialization failed: {str(e)}") from e
     
     def process_chat(
         self,
