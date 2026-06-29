@@ -184,13 +184,12 @@ class SessionSerializer(serializers.Serializer):
     status = serializers.SerializerMethodField()
     
     def get_title(self, obj):
-        # Se tem um título customizado, retorna ele, senão pega a primeira mensagem
-        if hasattr(obj, 'title') and obj.title:
-            return obj.title
-        first_message = obj.messages.filter(role='user').first()
-        if first_message:
-            return first_message.content[:50] + ('...' if len(first_message.content) > 50 else '')
-        return 'Novo chat'
+        # Retornar data + primeiros caracteres do session_id
+        from django.utils import timezone
+        created_date = timezone.localtime(obj.created_at)
+        date_str = created_date.strftime('%d/%m')
+        session_prefix = str(obj.session_id)[:8]
+        return f"{date_str} - {session_prefix}"
     
     def get_lastMessagePreview(self, obj):
         last_message = obj.messages.order_by('-created_at').first()
