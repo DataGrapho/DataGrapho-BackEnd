@@ -70,6 +70,28 @@ class DeparaServiceTest(TestCase):
         self.assertEqual(depara.codigo_origem, "ORIG_001")
         self.assertTrue(depara.ativo)
 
+    def test_create_depara_with_catalog_id(self):
+        data = {
+            "id_catalogo": self.catalog.id_catalogo,
+            "codigo_origem": "ORIG_003",
+            "codigo_destino": "DEST_003",
+            "ativo": True,
+        }
+
+        depara = self.service.create_depara(data)
+
+        self.assertEqual(depara.id_catalogo.id_catalogo, self.catalog.id_catalogo)
+
+    def test_create_depara_with_invalid_catalog_id(self):
+        data = {
+            "id_catalogo": 99999,
+            "codigo_origem": "ORIG_004",
+            "codigo_destino": "DEST_004",
+        }
+
+        with self.assertRaises(ValueError):
+            self.service.create_depara(data)
+
     def test_create_depara_missing_required_field(self):
         data = {"codigo_origem": "ORIG_001", "codigo_destino": "DEST_001"}
 
@@ -119,6 +141,20 @@ class DeparaServiceTest(TestCase):
         )
 
         self.assertEqual(updated.descricao_origem, "Updated origin description")
+
+    def test_update_depara_with_catalog_id(self):
+        other_catalog = CatalogoDePara.objects.create(
+            tabela_origem="other_table", descricao="Other Catalog"
+        )
+        depara = DePara.objects.create(
+            id_catalogo=self.catalog, codigo_origem="ORIG_001", codigo_destino="DEST_001"
+        )
+
+        updated = self.service.update_depara(
+            depara.id_depara, {"id_catalogo": other_catalog.id_catalogo}
+        )
+
+        self.assertEqual(updated.id_catalogo.id_catalogo, other_catalog.id_catalogo)
 
     def test_delete_depara(self):
         depara = DePara.objects.create(

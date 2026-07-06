@@ -1,5 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
+from catalogo_depara.models import CatalogoDePara
 from django.db import transaction
 
 from .models import DePara
@@ -17,6 +18,34 @@ class DeparaService:
     def __init__(self):
         self.repository = DeparaRepository()
 
+    @staticmethod
+    def _extract_catalogo_id(id_catalogo: Union[int, CatalogoDePara]) -> int:
+        if hasattr(id_catalogo, "id_catalogo"):
+            return id_catalogo.id_catalogo
+        return int(id_catalogo)
+
+    @staticmethod
+    def _normalize_data(data: dict) -> dict:
+        normalized = dict(data)
+
+        if "id_catalogo" in normalized and normalized["id_catalogo"] is not None:
+            if not hasattr(normalized["id_catalogo"], "id_catalogo"):
+                catalogo_id = DeparaService._extract_catalogo_id(normalized["id_catalogo"])
+                try:
+                    normalized["id_catalogo"] = CatalogoDePara.objects.get(id_catalogo=catalogo_id)
+                except CatalogoDePara.DoesNotExist as exc:
+                    raise ValueError(f"Catálogo com id {catalogo_id} não encontrado") from exc
+
+        if "id_depara_pai" in normalized and normalized["id_depara_pai"] is not None:
+            if not hasattr(normalized["id_depara_pai"], "id_depara"):
+                pai_id = int(normalized["id_depara_pai"])
+                try:
+                    normalized["id_depara_pai"] = DePara.objects.get(id_depara=pai_id)
+                except DePara.DoesNotExist as exc:
+                    raise ValueError(f"DePara pai com id {pai_id} não encontrado") from exc
+
+        return normalized
+
     @transaction.atomic
     def create_depara(self, data: dict) -> DePara:
         """
@@ -31,6 +60,8 @@ class DeparaService:
         Raises:
             ValueError: If validation fails
         """
+        data = self._normalize_data(data)
+
         # Validate required fields
         if not data.get("id_catalogo"):
             raise ValueError("id_catalogo é obrigatório")
@@ -50,11 +81,7 @@ class DeparaService:
 
         # Check for duplicate mapping
         if self.repository.exists_mapping(
-            (
-                data["id_catalogo"].id_catalogo
-                if hasattr(data["id_catalogo"], "id_catalogo")
-                else data["id_catalogo"]
-            ),
+            self._extract_catalogo_id(data["id_catalogo"]),
             data["codigo_origem"],
             data["codigo_destino"],
         ):
@@ -141,6 +168,8 @@ class DeparaService:
         if not depara:
             return None
 
+        data = self._normalize_data(data)
+
         # Validate codes if they're being updated
         if "codigo_origem" in data:
             if not data["codigo_origem"] or len(data["codigo_origem"].strip()) == 0:
@@ -155,10 +184,7 @@ class DeparaService:
             codigo_origem = data.get("codigo_origem", depara.codigo_origem)
             codigo_destino = data.get("codigo_destino", depara.codigo_destino)
             id_catalogo = data.get("id_catalogo", depara.id_catalogo)
-
-            catalogo_id = (
-                id_catalogo.id_catalogo if hasattr(id_catalogo, "id_catalogo") else id_catalogo
-            )
+            catalogo_id = self._extract_catalogo_id(id_catalogo)
 
             if self.repository.exists_mapping(
                 catalogo_id, codigo_origem, codigo_destino, exclude_id=id_depara
