@@ -137,11 +137,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.UserRateThrottle',
-    ],
     'DEFAULT_THROTTLE_RATES': {
-        'user': f"{int(os.getenv('CHATBOT_RATE_LIMIT', '10'))}/min",
         'chatbot': f"{int(os.getenv('CHATBOT_RATE_LIMIT', '10'))}/min",
     }
 }
