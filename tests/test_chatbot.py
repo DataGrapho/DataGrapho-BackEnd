@@ -194,6 +194,30 @@ class RelationalWineCatalogTest(TestCase):
 
         self.assertEqual(test_group['quantidade_vinhos'], 2)
 
+    def test_top_wines_preserves_ties_and_explains_consumption_metrics(self):
+        WineConsumption.objects.create(
+            consumed_at=date(2025, 4, 1), wine=self.wine, quantity=99,
+        )
+        WineConsumption.objects.create(
+            consumed_at=date(2025, 4, 2), wine=self.historical_wine, quantity=99,
+        )
+
+        result = WineRepository().get_top_wines(limit=1)
+
+        self.assertEqual(result['requested_limit'], 1)
+        self.assertEqual(result['returned_count'], 2)
+        self.assertTrue(result['tie_at_cutoff'])
+        self.assertEqual(result['ranking_metric'], 'total_units_consumed')
+        self.assertSetEqual(
+            {wine['vinho'] for wine in result['wines']},
+            {'Reserva Relacional', 'Rótulo Somente Histórico'},
+        )
+        self.assertTrue(all(wine['total_consumo'] == 100 for wine in result['wines']))
+        self.assertTrue(all(wine['vezes_consumido'] == 2 for wine in result['wines']))
+        demo_flags = {wine['vinho']: wine['is_demo'] for wine in result['wines']}
+        self.assertTrue(demo_flags['Reserva Relacional'])
+        self.assertFalse(demo_flags['Rótulo Somente Histórico'])
+
     def test_search_tool_has_optional_filters_for_local_models(self):
         schema = SearchWineCatalogTool().to_openai_format()
 
