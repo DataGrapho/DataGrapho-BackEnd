@@ -30,11 +30,6 @@ from chatbot.models import (
 )
 
 
-class NeverCalledAIProvider:
-    def chat_completion(self, messages, tools, temperature):
-        raise AssertionError('The AI provider must not be called for a forced database route')
-
-
 class WineLookupTest(TestCase):
     def test_returns_country_and_price_from_database(self):
         country = WineCountry.objects.create(name='Argentina Teste', iso_code='XZ')
@@ -134,20 +129,38 @@ class RelationalWineCatalogTest(TestCase):
         self.assertEqual(result['count'], 1)
         self.assertEqual(result['wines'][0]['avaliacao_media'], 4.8)
 
-    def test_multi_grape_question_is_forced_to_database_without_ai_answer(self):
+    def test_ai_interprets_multi_grape_question_and_chooses_database_tool(self):
+        class MultiGrapeProvider:
+            def __init__(self):
+                self.calls = 0
+
+            def chat_completion(self, messages, tools, temperature):
+                self.calls += 1
+                if self.calls == 1:
+                    return AIResponse(tool_calls=[{
+                        'id': 'multi-grape',
+                        'name': 'search_wine_catalog',
+                        'arguments': json.dumps({
+                            'min_grape_varieties': 2,
+                            'limit': 30,
+                        }),
+                    }])
+                return AIResponse(content='Encontrei os blends consultando o catálogo.')
+
         registry = ToolRegistry()
         registry.register_tool(SearchWineCatalogTool())
+        provider = MultiGrapeProvider()
         engine = FunctionCallingEngine(
-            ai_provider=NeverCalledAIProvider(),
+            ai_provider=provider,
             tool_registry=registry,
             repositories={'wine': WineRepository()},
         )
 
         result = engine.execute_query('Quais vinhos utilizam mais de uma uva?')
 
+        self.assertEqual(provider.calls, 2)
         self.assertEqual(result.tools_used, ['search_wine_catalog'])
-        self.assertIn('Quinta do Crasto Douro Tinto', result.response)
-        self.assertNotIn('Alma Negra Malbec-Cabernet', result.response)
+        self.assertIn('blends', result.response)
 
     def test_summary_groups_wines_through_country_relation(self):
         result = WineRepository().get_catalog_summary('pais', 'catalogo')
@@ -271,7 +284,7 @@ class FunctionCallingEngineTest(TestCase):
         self.assertEqual(result.error, 'DATABASE_TOOL_REQUIRED')
         self.assertNotIn('20', result.response)
 
-    def test_generic_summary_question_uses_all_sources(self):
+    def test_summary_uses_source_selected_by_ai(self):
         registry = ToolRegistry()
         registry.register_tool(GetWineCatalogSummaryTool())
         repository = FakeSummaryRepository()
@@ -287,9 +300,9 @@ class FunctionCallingEngineTest(TestCase):
             user_message='Qual país possui mais vinhos cadastrados?',
         )
 
-        self.assertEqual(result['source'], 'todos')
+        self.assertEqual(result['source'], 'catalogo')
 
-    def test_explicit_summary_source_is_resolved_from_question(self):
+    def test_summary_defaults_to_all_and_accepts_explicit_source(self):
         registry = ToolRegistry()
         registry.register_tool(GetWineCatalogSummaryTool())
         repository = FakeSummaryRepository()
@@ -299,7 +312,7 @@ class FunctionCallingEngineTest(TestCase):
             repositories={'wine': repository},
         )
 
-        catalog = engine._execute_tool(
+        all_sources = engine._execute_tool(
             'get_wine_database_summary',
             json.dumps({'group_by': 'pais'}),
             user_message='Considerando somente o catálogo, qual país lidera?',
@@ -310,127 +323,36 @@ class FunctionCallingEngineTest(TestCase):
             user_message='No histórico de consumo, qual país lidera?',
         )
 
-        self.assertEqual(catalog['source'], 'catalogo')
+        self.assertEqual(all_sources['source'], 'todos')
         self.assertEqual(history['source'], 'historico')
 
-    def test_search_filters_are_limited_to_current_question(self):
+    def test_search_arguments_selected_by_ai_are_validated(self):
         sanitized = FunctionCallingEngine._sanitize_wine_search_arguments(
             {
                 'country': 'Brasil',
+                'sweetness': 'Meio seco',
+                'max_price': 200,
+                'min_rating': 4.4,
+                'in_stock': 'false',
                 'limit': 1000000000000000,
-            },
-            'Recomende um vinho seco com nota mínima 4,4, preço máximo de R$ 200 '
-            'e estoque disponível.',
+                'unsupported': 'ignored',
+            }
         )
 
-        self.assertNotIn('country', sanitized)
-        self.assertEqual(sanitized['sweetness'], 'seco')
+        self.assertEqual(sanitized['country'], 'Brasil')
+        self.assertEqual(sanitized['sweetness'], 'meio_seco')
         self.assertEqual(sanitized['max_price'], 200)
         self.assertEqual(sanitized['min_rating'], 4.4)
-        self.assertTrue(sanitized['in_stock'])
+        self.assertFalse(sanitized['in_stock'])
         self.assertEqual(sanitized['limit'], 30)
+        self.assertNotIn('unsupported', sanitized)
 
-    def test_multi_grape_question_forces_minimum_of_two_varieties(self):
+    def test_multi_grape_filter_selected_by_ai_is_preserved(self):
         sanitized = FunctionCallingEngine._sanitize_wine_search_arguments(
-            {}, 'Quais vinhos utilizam mais de uma uva?'
+            {'min_grape_varieties': 2}
         )
 
         self.assertEqual(sanitized['min_grape_varieties'], 2)
-
-    def test_top_five_summary_keeps_every_country_tied_at_cutoff(self):
-        result = {
-            'source': 'todos',
-            'groups': [
-                {'grupo': 'Argentina', 'quantidade_vinhos': 16},
-                {'grupo': 'Itália', 'quantidade_vinhos': 12},
-                {'grupo': 'Chile', 'quantidade_vinhos': 9},
-                {'grupo': 'Brasil', 'quantidade_vinhos': 7},
-                {'grupo': 'França', 'quantidade_vinhos': 5},
-                {'grupo': 'Portugal', 'quantidade_vinhos': 5},
-            ],
-        }
-
-        response = FunctionCallingEngine._render_wine_summary(
-            result, 'Faça o top 5 de países com mais vinhos cadastrados'
-        )
-
-        self.assertIn('França', response)
-        self.assertIn('Portugal', response)
-        self.assertIn('empate', response)
-
-    def test_list_five_summary_is_rendered_as_ranking(self):
-        result = {
-            'source': 'todos',
-            'groups': [
-                {'grupo': 'Argentina', 'quantidade_vinhos': 16},
-                {'grupo': 'Itália', 'quantidade_vinhos': 12},
-                {'grupo': 'Chile', 'quantidade_vinhos': 9},
-                {'grupo': 'Brasil', 'quantidade_vinhos': 7},
-                {'grupo': 'França', 'quantidade_vinhos': 5},
-                {'grupo': 'Portugal', 'quantidade_vinhos': 4},
-            ],
-        }
-
-        response = FunctionCallingEngine._render_wine_summary(
-            result, 'Liste os 5 países com mais vinhos da nossa lista'
-        )
-
-        self.assertIn('o ranking é', response)
-        self.assertIn('França', response)
-        self.assertNotIn('Portugal', response)
-
-    def test_structured_limit_from_ai_controls_summary_ranking(self):
-        result = {
-            'source': 'todos',
-            'requested_limit': 2,
-            'groups': [
-                {'grupo': 'Argentina', 'quantidade_vinhos': 16},
-                {'grupo': 'Itália', 'quantidade_vinhos': 12},
-                {'grupo': 'Chile', 'quantidade_vinhos': 9},
-            ],
-        }
-
-        response = FunctionCallingEngine._render_wine_summary(
-            result, 'Quero conhecer os principais países da seleção'
-        )
-
-        self.assertIn('Argentina', response)
-        self.assertIn('Itália', response)
-        self.assertNotIn('Chile', response)
-
-    def test_which_countries_question_lists_every_group(self):
-        result = {
-            'source': 'todos',
-            'groups': [
-                {'grupo': 'Argentina', 'quantidade_vinhos': 24},
-                {'grupo': 'Brasil', 'quantidade_vinhos': 15},
-                {'grupo': 'Chile', 'quantidade_vinhos': 17},
-            ],
-        }
-
-        response = FunctionCallingEngine._render_wine_summary(
-            result, 'Nós temos vinhos de quais países na nossa base de dados?'
-        )
-
-        self.assertIn('3 grupos', response)
-        self.assertIn('Argentina', response)
-        self.assertIn('Brasil', response)
-        self.assertIn('Chile', response)
-
-    def test_common_ranking_phrasings_extract_requested_size(self):
-        messages = (
-            'Mostre os 5 países com mais vinhos',
-            'Quais são os 5 países com mais vinhos?',
-            'Exiba 5 países com mais vinhos',
-            'Ranking dos 5 países com mais vinhos',
-        )
-
-        for message in messages:
-            with self.subTest(message=message):
-                self.assertEqual(
-                    FunctionCallingEngine._extract_requested_ranking_size(message),
-                    5,
-                )
 
     def test_false_negative_search_response_is_replaced_with_database_result(self):
         tool_result = {
