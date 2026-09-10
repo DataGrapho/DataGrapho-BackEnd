@@ -3,6 +3,8 @@ import json
 import logging
 from typing import List, Dict, Any, Optional
 
+from django.conf import settings
+
 from anthropic import Anthropic, APIError, RateLimitError, APITimeoutError
 
 from .base import AIProvider, AIMessage, AIResponse
@@ -35,6 +37,7 @@ class AnthropicProvider(AIProvider):
             "Se precisar de múltiplas ferramentas para responder, use-as em sequência."
         )
         
+        system_prompt = settings.CHATBOT_CONFIG.get("SYSTEM_INSTRUCTION")
         anthropic_messages = self._format_messages(messages)
         
         request_params = {

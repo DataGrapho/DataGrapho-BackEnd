@@ -10,6 +10,7 @@ class AIMessage:
     tool_calls: Optional[List[Dict[str, Any]]] = None
     tool_call_id: Optional[str] = None
     name: Optional[str] = None
+    provider_content: Optional[Any] = None
 
 
 @dataclass
@@ -17,6 +18,7 @@ class AIResponse:
     content: Optional[str] = None
     tool_calls: Optional[List[Dict[str, Any]]] = None
     finish_reason: str = "stop"
+    provider_content: Optional[Any] = None
     
     @property
     def has_tool_calls(self) -> bool:

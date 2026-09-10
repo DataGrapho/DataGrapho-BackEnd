@@ -10,9 +10,15 @@ class Tool:
     description: str
     parameters: Dict[str, str]
     query_template: Optional[str] = None
+    domain: Optional[str] = None
+    required_parameters: Optional[List[str]] = None
     
     def validate_parameters(self, params: Dict[str, Any]) -> bool:
-        for param_name in self.parameters.keys():
+        required_parameters = self.required_parameters
+        if required_parameters is None:
+            required_parameters = list(self.parameters.keys())
+
+        for param_name in required_parameters:
             if param_name not in params:
                 return False
         
@@ -40,7 +46,8 @@ class Tool:
             if param_type == 'date':
                 properties[param_name]['format'] = 'date'
             
-            required.append(param_name)
+            if self.required_parameters is None or param_name in self.required_parameters:
+                required.append(param_name)
         
         return {
             'type': 'function',
@@ -73,7 +80,8 @@ class Tool:
             if param_type == 'date':
                 properties[param_name]['format'] = 'date'
             
-            required.append(param_name)
+            if self.required_parameters is None or param_name in self.required_parameters:
+                required.append(param_name)
         
         return {
             'name': self.name,

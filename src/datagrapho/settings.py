@@ -195,14 +195,30 @@ CHATBOT_CONFIG = {
     # AI Provider settings (generic)
     'AI_PROVIDER': os.getenv('AI_PROVIDER', 'gemini').lower(),
     'AI_API_KEY': os.getenv('AI_API_KEY', ''),
-    'AI_MODEL': os.getenv('AI_MODEL', 'gemini-1.5-flash'),
+    'AI_MODEL': os.getenv('AI_MODEL', 'gemini-2.5-flash'),
     'AI_BASE_URL': os.getenv('AI_BASE_URL', None),  # For LM Studio, Ollama, etc.
-    'AI_TIMEOUT': int(os.getenv('AI_TIMEOUT', '30')),
+    'AI_TIMEOUT': int(os.getenv('AI_TIMEOUT', '90')),
     'AI_MAX_RETRIES': int(os.getenv('AI_MAX_RETRIES', '3')),
     
     # Execution settings
     'MAX_TOOL_CALLS_PER_QUESTION': int(os.getenv('MAX_TOOL_CALLS_PER_QUESTION', '5')),
     'AI_TEMPERATURE': float(os.getenv('AI_TEMPERATURE', '0.0')),
+    'SYSTEM_INSTRUCTION': os.getenv(
+        'CHATBOT_SYSTEM_INSTRUCTION',
+        (
+            'Voce e o assistente de dados do DataGrapho. Responda em portugues do Brasil, '
+            'de forma clara e objetiva. Para perguntas sobre dados, use obrigatoriamente '
+            'as ferramentas disponiveis. Nunca invente valores ou cadastros. Se a consulta '
+            'nao encontrar resultados, informe isso explicitamente. Valores monetarios devem '
+            'ser apresentados em reais (R$). Em contagens e resumos, informe explicitamente '
+            'a fonte descrita pela ferramenta e mencione todos os grupos quando houver empate. '
+            'Siga fielmente o campo answer_guidance retornado pelas ferramentas. '
+            'Nao reutilize filtros de perguntas anteriores, exceto quando a pergunta atual '
+            'indicar explicitamente que e uma continuacao. Formate reais com duas casas '
+            'decimais e virgula, por exemplo R$ 99,90. '
+            'Nao chame avaliacoes demonstrativas ou editoriais de avaliacoes de consumidores.'
+        ),
+    ),
     
     # Rate limiting and caching
     'RATE_LIMIT': int(os.getenv('CHATBOT_RATE_LIMIT', '10')),

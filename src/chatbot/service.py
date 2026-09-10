@@ -36,14 +36,19 @@ class ChatbotService:
         )
         
         session = self._get_or_create_session(user_id, session_id)
+
+        # The current message must not appear twice in the prompt.
+        conversation_history = self._get_conversation_history(session)
         
         self._store_message(
             session=session,
             role='user',
             content=message
         )
-        
-        conversation_history = self._get_conversation_history(session)
+
+        if session.title == 'Novo chat':
+            session.title = message[:120]
+            session.save(update_fields=['title', 'last_activity'])
         
         try:
             result = self.engine.execute_query(

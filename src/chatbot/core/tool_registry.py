@@ -54,6 +54,13 @@ class ToolRegistry:
         
         if not isinstance(tool.parameters, dict):
             raise ValueError("Tool parameters must be a dictionary")
+
+        if tool.required_parameters is not None:
+            unknown_required = set(tool.required_parameters) - set(tool.parameters)
+            if unknown_required:
+                raise ValueError(
+                    f"Required parameters are not declared: {sorted(unknown_required)}"
+                )
         
         valid_types = {'string', 'integer', 'float', 'date', 'boolean'}
         for param_name, param_type in tool.parameters.items():

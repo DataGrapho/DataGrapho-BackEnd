@@ -1,14 +1,16 @@
 import time
 import logging
+import hashlib
+import unicodedata
 from typing import Dict, Any, List
 from decimal import Decimal
 from datetime import date
 
-from django.db.models import Sum, Count, Avg, Q
+from django.db.models import Sum, Count, Avg, Q, Prefetch
 from django.core.cache import cache
 from django.conf import settings
 
-from chatbot.models import FatoConsumoVinho
+from chatbot.models import FatoConsumoVinho, Wine, WineGrape, WineOffer
 
 
 logger = logging.getLogger(__name__)
@@ -19,6 +21,361 @@ class WineRepository:
     
     def __init__(self):
         self.cache_ttl = settings.CHATBOT_CONFIG.get('CACHE_TTL', 300)
+
+    def get_wine_by_name(self, wine_name: str) -> Dict[str, Any]:
+        """Busca vinhos pelo nome e retorna apenas dados persistidos no banco."""
+        normalized_name = wine_name.strip()
+        if not normalized_name:
+            raise ValueError("wine_name is required")
+
+        name_hash = hashlib.sha256(normalized_name.casefold().encode("utf-8")).hexdigest()
+        cache_key = f"wine_by_name_{name_hash}"
+        cached_result = cache.get(cache_key)
+        if cached_result is not None:
+            return cached_result
+
+        catalog_result = self.search_wine_catalog(query=normalized_name, limit=10)
+        if catalog_result['count']:
+            result = {
+                'query': normalized_name,
+                'count': catalog_result['count'],
+                'wines': catalog_result['wines'],
+                'source': 'relational_catalog',
+            }
+            cache.set(cache_key, result, self.cache_ttl)
+            return result
+
+        wines = (
+            FatoConsumoVinho.objects.filter(vinho__icontains=normalized_name)
+            .values("vinho", "produtor", "pais", "regiao", "safra", "preco")
+            .distinct()
+            .order_by("vinho", "safra")[:10]
+        )
+
+        result = {
+            "query": normalized_name,
+            "count": len(wines),
+            "wines": [
+                {
+                    "nome": wine["vinho"],
+                    "produtor": wine["produtor"],
+                    "pais": wine["pais"],
+                    "regiao": wine["regiao"],
+                    "safra": wine["safra"],
+                    "preco": float(wine["preco"]) if wine["preco"] is not None else None,
+                    "moeda": "BRL",
+                }
+                for wine in wines
+            ],
+        }
+        cache.set(cache_key, result, self.cache_ttl)
+        return result
+
+    def search_wine_catalog(
+        self,
+        query: str = '',
+        country: str = '',
+        region: str = '',
+        producer: str = '',
+        grape: str = '',
+        color: str = '',
+        sweetness: str = '',
+        max_price: float = None,
+        min_rating: float = None,
+        min_grape_varieties: int = None,
+        in_stock: bool = False,
+        limit: int = 10,
+    ) -> Dict[str, Any]:
+        """Pesquisa o catálogo usando relações entre vinho, origem, uvas e ofertas."""
+        limit = max(1, min(int(limit or 10), 30))
+        queryset = (
+            Wine.objects.filter(active=True)
+            .select_related('producer__region__country')
+            .prefetch_related(
+                Prefetch(
+                    'grape_links',
+                    queryset=WineGrape.objects.select_related('grape').order_by('-percentage'),
+                ),
+                Prefetch(
+                    'offers',
+                    queryset=WineOffer.objects.filter(active=True).order_by('price'),
+                    to_attr='active_offers',
+                ),
+            )
+            .annotate(
+                average_rating=Avg('reviews__score'),
+                grape_variety_count=Count('grapes', distinct=True),
+            )
+        )
+
+        query = str(query or '').strip()
+        if query:
+            queryset = queryset.filter(
+                Q(name__icontains=query)
+                | Q(producer__name__icontains=query)
+                | Q(producer__region__name__icontains=query)
+                | Q(producer__region__country__name__icontains=query)
+                | Q(grapes__name__icontains=query)
+            )
+        if country:
+            queryset = queryset.filter(producer__region__country__name__icontains=country)
+        if region:
+            queryset = queryset.filter(producer__region__name__icontains=region)
+        if producer:
+            queryset = queryset.filter(producer__name__icontains=producer)
+        if grape:
+            queryset = queryset.filter(grapes__name__icontains=grape)
+        if color:
+            queryset = queryset.filter(color__iexact=self._normalize_style(color))
+        if sweetness:
+            queryset = queryset.filter(sweetness__iexact=self._normalize_style(sweetness))
+        if max_price not in (None, ''):
+            queryset = queryset.filter(
+                offers__active=True,
+                offers__price__lte=Decimal(str(max_price)),
+            )
+        if min_rating not in (None, ''):
+            queryset = queryset.filter(average_rating__gte=Decimal(str(min_rating)))
+        if min_grape_varieties not in (None, ''):
+            queryset = queryset.filter(grape_variety_count__gte=min_grape_varieties)
+        if self._as_bool(in_stock):
+            queryset = queryset.filter(offers__active=True, offers__stock__gt=0)
+
+        wines = list(queryset.distinct().order_by('-average_rating', 'name')[:limit])
+        return {
+            'filters': {
+                'query': query,
+                'country': country,
+                'region': region,
+                'producer': producer,
+                'grape': grape,
+                'color': color,
+                'sweetness': sweetness,
+                'max_price': max_price,
+                'min_rating': min_rating,
+                'min_grape_varieties': min_grape_varieties,
+                'in_stock': self._as_bool(in_stock),
+            },
+            'count': len(wines),
+            'wines': [self._serialize_catalog_wine(wine) for wine in wines],
+            'notice': 'Registros com dado_demonstrativo=true usam valores fictícios de teste.',
+        }
+
+    def get_catalog_summary(self, group_by: str, source: str = 'todos') -> Dict[str, Any]:
+        """Agrupa catálogo e/ou histórico, deduplicando vinhos dentro de cada grupo."""
+        group_aliases = {
+            'pais': 'pais', 'country': 'pais',
+            'regiao': 'regiao', 'region': 'regiao',
+            'produtor': 'produtor', 'producer': 'produtor',
+            'uva': 'uva', 'grape': 'uva',
+            'cor': 'cor', 'color': 'cor',
+            'tipo': 'tipo', 'sweetness': 'tipo',
+        }
+        source_aliases = {
+            'catalogo': 'catalogo', 'catalog': 'catalogo',
+            'historico': 'historico', 'history': 'historico',
+            'todos': 'todos', 'all': 'todos',
+        }
+        dimension = group_aliases.get(self._normalize_style(group_by))
+        normalized_source = source_aliases.get(self._normalize_style(source or 'todos'))
+        if not dimension:
+            raise ValueError('group_by must be pais, regiao, produtor, uva, cor or tipo')
+        if not normalized_source:
+            raise ValueError('source must be catalogo, historico or todos')
+
+        buckets = {}
+
+        def add_wine(group_value, wine_name, price, rating, item_source):
+            if not group_value or not wine_name:
+                return
+            group_key = self._normalize_style(group_value)
+            wine_key = self._normalize_text(wine_name)
+            bucket = buckets.setdefault(
+                group_key,
+                {'grupo': str(group_value), 'wines': {}},
+            )
+            # O catálogo estruturado tem precedência quando o vinho existe nas duas fontes.
+            if wine_key in bucket['wines'] and item_source == 'historico':
+                return
+            bucket['wines'][wine_key] = {
+                'preco': float(price) if price is not None else None,
+                'avaliacao': float(rating) if rating is not None else None,
+                'fonte': item_source,
+            }
+
+        if normalized_source in {'catalogo', 'todos'}:
+            catalog_wines = (
+                Wine.objects.filter(active=True)
+                .select_related('producer__region__country')
+                .prefetch_related(
+                    Prefetch(
+                        'grape_links',
+                        queryset=WineGrape.objects.select_related('grape'),
+                    ),
+                    Prefetch(
+                        'offers',
+                        queryset=WineOffer.objects.filter(active=True).order_by('price'),
+                        to_attr='active_offers',
+                    ),
+                )
+                .annotate(average_rating=Avg('reviews__score'))
+            )
+            for wine in catalog_wines:
+                group_values = {
+                    'pais': [wine.producer.region.country.name],
+                    'regiao': [wine.producer.region.name],
+                    'produtor': [wine.producer.name],
+                    'uva': [link.grape.name for link in wine.grape_links.all()],
+                    'cor': [wine.get_color_display()],
+                    'tipo': [wine.get_sweetness_display()],
+                }[dimension]
+                best_offer = wine.active_offers[0] if wine.active_offers else None
+                for group_value in group_values:
+                    add_wine(
+                        group_value,
+                        wine.name,
+                        best_offer.price if best_offer else None,
+                        wine.average_rating,
+                        'catalogo',
+                    )
+
+        if normalized_source in {'historico', 'todos'}:
+            history_field = {
+                'pais': 'pais', 'regiao': 'regiao', 'produtor': 'produtor',
+                'uva': 'uva', 'cor': 'cor', 'tipo': 'teor_acucar',
+            }[dimension]
+            history_rows = (
+                FatoConsumoVinho.objects.order_by('-data_consumo')
+                .values('vinho', 'preco', history_field)
+            )
+            for row in history_rows:
+                add_wine(
+                    row[history_field],
+                    row['vinho'],
+                    row['preco'],
+                    None,
+                    'historico',
+                )
+
+        groups = []
+        for bucket in buckets.values():
+            records = list(bucket['wines'].values())
+            prices = [item['preco'] for item in records if item['preco'] is not None]
+            ratings = [
+                item['avaliacao'] for item in records if item['avaliacao'] is not None
+            ]
+            groups.append({
+                'grupo': bucket['grupo'],
+                'quantidade_vinhos': len(records),
+                'preco_medio': round(sum(prices) / len(prices), 2) if prices else None,
+                'avaliacao_media': (
+                    round(sum(ratings) / len(ratings), 2) if ratings else None
+                ),
+                'vinhos_com_preco': len(prices),
+                'vinhos_com_avaliacao': len(ratings),
+                'moeda': 'BRL',
+                'fontes': sorted({item['fonte'] for item in records}),
+            })
+        groups.sort(key=lambda item: (-item['quantidade_vinhos'], item['grupo'].casefold()))
+        largest_count = groups[0]['quantidade_vinhos'] if groups else 0
+        leaders = [
+            item['grupo'] for item in groups
+            if item['quantidade_vinhos'] == largest_count
+        ]
+
+        descriptions = {
+            'catalogo': 'Somente o catálogo relacional de produtos.',
+            'historico': 'Somente os vinhos distintos do histórico de consumo.',
+            'todos': (
+                'Catálogo relacional e histórico de consumo combinados, com vinhos '
+                'de mesmo nome contados uma única vez por grupo.'
+            ),
+        }
+        guidance = {
+            'catalogo': (
+                'Informe que a resposta considera somente o catálogo relacional de produtos.'
+            ),
+            'historico': (
+                'Informe que a resposta considera somente o histórico de consumo.'
+            ),
+            'todos': (
+                'Informe obrigatoriamente que a resposta combina o catálogo relacional e o '
+                'histórico de consumo. Não descreva o resultado como sendo somente do catálogo.'
+            ),
+        }
+        return {
+            'group_by': dimension,
+            'source': normalized_source,
+            'source_description': descriptions[normalized_source],
+            'answer_guidance': guidance[normalized_source],
+            'counting_rule': 'Quantidade de nomes distintos de vinho por grupo.',
+            'averages_rule': (
+                'Preço e avaliação médios usam somente vinhos que possuem o respectivo dado; '
+                'consulte vinhos_com_preco e vinhos_com_avaliacao antes de interpretar a média.'
+            ),
+            'count': len(groups),
+            'largest_count': largest_count,
+            'leaders': leaders,
+            'has_tie': len(leaders) > 1,
+            'groups': groups,
+        }
+
+    @staticmethod
+    def _normalize_style(value: str) -> str:
+        normalized = unicodedata.normalize('NFKD', str(value or ''))
+        normalized = ''.join(char for char in normalized if not unicodedata.combining(char))
+        return normalized.strip().casefold().replace('-', '_').replace(' ', '_')
+
+    @staticmethod
+    def _normalize_text(value: str) -> str:
+        normalized = unicodedata.normalize('NFKD', str(value or ''))
+        normalized = ''.join(char for char in normalized if not unicodedata.combining(char))
+        return ' '.join(normalized.casefold().split())
+
+    @staticmethod
+    def _as_bool(value: Any) -> bool:
+        if isinstance(value, str):
+            return value.strip().casefold() not in {'false', '0', 'nao', 'não', ''}
+        return bool(value)
+
+    @staticmethod
+    def _serialize_catalog_wine(wine: Wine) -> Dict[str, Any]:
+        offers = getattr(wine, 'active_offers', [])
+        best_offer = offers[0] if offers else None
+        return {
+            'nome': wine.name,
+            'produtor': wine.producer.name,
+            'pais': wine.producer.region.country.name,
+            'regiao': wine.producer.region.name,
+            'clima_regiao': wine.producer.region.climate or None,
+            'cor': wine.get_color_display(),
+            'tipo': wine.get_sweetness_display(),
+            'teor_alcoolico': (
+                float(wine.alcohol_percentage)
+                if wine.alcohol_percentage is not None else None
+            ),
+            'uvas': [
+                {
+                    'nome': link.grape.name,
+                    'percentual': float(link.percentage) if link.percentage is not None else None,
+                }
+                for link in wine.grape_links.all()
+            ],
+            'safra': best_offer.vintage_year if best_offer else None,
+            'preco': float(best_offer.price) if best_offer else None,
+            'preco_formatado': (
+                f'R$ {best_offer.price:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+                if best_offer else None
+            ),
+            'moeda': best_offer.currency if best_offer else None,
+            'estoque': best_offer.stock if best_offer else 0,
+            'avaliacao_media': (
+                round(float(wine.average_rating), 2)
+                if wine.average_rating is not None else None
+            ),
+            'descricao': wine.description,
+            'dado_demonstrativo': wine.is_demo,
+        }
     
     def get_consumo_by_period(self, start_date: date, end_date: date) -> Dict[str, Any]:
         """Obter consumos de vinho por período"""

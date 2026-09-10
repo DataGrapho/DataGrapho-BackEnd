@@ -2,6 +2,8 @@ import time
 import logging
 from typing import List, Dict, Any, Optional
 
+from django.conf import settings
+
 from openai import OpenAI, APIError, RateLimitError, APITimeoutError
 
 from .base import AIProvider, AIMessage, AIResponse
@@ -65,6 +67,7 @@ class OpenAIProvider(AIProvider):
             )
         }
         
+        system_prompt["content"] = settings.CHATBOT_CONFIG.get("SYSTEM_INSTRUCTION")
         openai_messages = [system_prompt] + self._format_messages(messages)
         
         request_params = {
