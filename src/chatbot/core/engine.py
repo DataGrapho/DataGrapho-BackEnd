@@ -55,6 +55,7 @@ class FunctionCallingEngine:
         tools_used = []
         tool_calls_count = 0
         successful_tool_results = []
+        grounding_retry_sent = False
         
         provider_name = settings.CHATBOT_CONFIG.get('AI_PROVIDER', 'openai')
         tool_definitions = self.tool_registry.get_tool_definitions_for_ai(provider_name)
@@ -175,6 +176,33 @@ class FunctionCallingEngine:
                     continue
                 
                 else:
+                    if (
+                        not successful_tool_results
+                        and self._requires_database_grounding(user_message)
+                    ):
+                        if grounding_retry_sent:
+                            logger.warning('AI refused required database tool twice')
+                            return ExecutionResult(
+                                response=(
+                                    'Não consegui consultar a base de vinhos para responder '
+                                    'com segurança. Tente reformular a pergunta.'
+                                ),
+                                tools_used=tools_used,
+                                tool_calls_count=tool_calls_count,
+                                error='DATABASE_TOOL_REQUIRED',
+                            )
+                        grounding_retry_sent = True
+                        messages.append(AIMessage(
+                            role='user',
+                            content=(
+                                'Validação interna: esta pergunta exige dados persistidos. '
+                                'Interprete a intenção e use agora a ferramenta de vinho mais '
+                                'adequada; não responda com conhecimento próprio.'
+                            ),
+                        ))
+                        logger.warning('Retrying because a database tool is required')
+                        continue
+
                     total_duration = time.time() - start_time
                     logger.info(f"✅ AI provided final response. Total time: {total_duration:.2f}s")
                     
@@ -221,9 +249,10 @@ class FunctionCallingEngine:
             raise ValueError(f"Invalid JSON arguments: {e}")
 
         if tool_name == 'get_wine_database_summary':
-            arguments['source'] = self._resolve_wine_summary_source(user_message)
+            source = self._normalize_plain_text(arguments.get('source', 'todos'))
+            arguments['source'] = source if source in {'catalogo', 'historico', 'todos'} else 'todos'
             logger.info(
-                'Resolved wine summary source from user question: %s',
+                'Validated wine summary source requested by AI: %s',
                 arguments['source'],
             )
         elif tool_name == 'search_wine_catalog':
@@ -280,24 +309,6 @@ class FunctionCallingEngine:
     ) -> Optional[ExecutionResult]:
         """Roteia intenções inequívocas para impedir respostas sem consulta ao banco."""
         message = self._normalize_plain_text(user_message)
-
-        is_country_summary = (
-            ('top ' in message and 'pais' in message and 'vinho' in message)
-            or ('qual pais' in message and 'mais vinho' in message)
-            or ('qual pais possui mais vinho' in message)
-        )
-        if is_country_summary and self.tool_registry.get_tool('get_wine_database_summary'):
-            result = self._execute_tool(
-                'get_wine_database_summary',
-                json.dumps({'group_by': 'pais'}),
-                user_message=user_message,
-            )
-            return ExecutionResult(
-                response=self._render_wine_summary(result, user_message),
-                tools_used=['get_wine_database_summary'],
-                tool_calls_count=1,
-            )
-
         multi_grape = any(marker in message for marker in (
             'mais de uma uva', 'multiplas uvas', 'varias uvas',
             'duas ou mais uvas',
@@ -446,6 +457,41 @@ class FunctionCallingEngine:
         return ' '.join(normalized.casefold().split())
 
     @classmethod
+    def _requires_database_grounding(cls, user_message: str) -> bool:
+        """Identifica perguntas factuais sobre o domínio que não podem ser improvisadas."""
+        message = cls._normalize_plain_text(user_message)
+        domain_markers = (
+            'vinho', 'vinhos', 'uva', 'uvas', 'safra', 'safras',
+            'produtor', 'produtores', 'vinicola', 'vinicolas',
+        )
+        data_markers = (
+            'quantos', 'quantas', 'quais', 'liste', 'listar', 'mostre', 'exiba',
+            'top', 'ranking', 'mais', 'menos', 'existe', 'recomende', 'preco',
+            'pais', 'paises', 'regiao', 'regioes', 'estoque', 'consumo',
+            'historico', 'base', 'dados', 'catalogo', 'avaliacao',
+        )
+        return (
+            any(marker in message for marker in domain_markers)
+            and any(marker in message for marker in data_markers)
+        )
+
+    @classmethod
+    def _extract_requested_ranking_size(cls, user_message: str) -> Optional[int]:
+        """Extrai o tamanho de rankings expresso em construções comuns em português."""
+        message = cls._normalize_plain_text(user_message)
+        patterns = (
+            r'\btop\s*(\d+)\b',
+            r'\b(?:liste|listar|mostre|mostrar|exiba|exibir)\s+(?:os\s+|as\s+)?(\d+)\b',
+            r'\bquais\s+(?:sao\s+)?(?:os\s+|as\s+)?(\d+)\b',
+            r'\branking\s+(?:d[oa]s?\s+)?(\d+)\b',
+        )
+        for pattern in patterns:
+            match = re.search(pattern, message)
+            if match:
+                return max(1, int(match.group(1)))
+        return None
+
+    @classmethod
     def _render_wine_summary(cls, result: Dict[str, Any], user_message: str) -> str:
         groups = result.get('groups', [])
         if not groups:
@@ -456,9 +502,11 @@ class FunctionCallingEngine:
             'historico': 'somente o histórico de consumo',
             'todos': 'o catálogo relacional e o histórico de consumo combinados',
         }[result['source']]
-        top_match = re.search(r'\btop\s*(\d+)\b', cls._normalize_plain_text(user_message))
-        if top_match:
-            requested = max(1, int(top_match.group(1)))
+        requested = result.get('requested_limit')
+        if requested is None:
+            # Compatibilidade caso o provedor não envie o parâmetro estruturado.
+            requested = cls._extract_requested_ranking_size(user_message)
+        if requested is not None:
             cutoff_index = min(requested, len(groups)) - 1
             cutoff_count = groups[cutoff_index]['quantidade_vinhos']
             selected = [

@@ -202,7 +202,7 @@ CHATBOT_CONFIG = {
     
     # Execution settings
     'MAX_TOOL_CALLS_PER_QUESTION': int(os.getenv('MAX_TOOL_CALLS_PER_QUESTION', '5')),
-    'AI_TEMPERATURE': float(os.getenv('AI_TEMPERATURE', '0.0')),
+    'AI_TEMPERATURE': float(os.getenv('AI_TEMPERATURE', '0.1')),
     'SYSTEM_INSTRUCTION': os.getenv(
         'CHATBOT_SYSTEM_INSTRUCTION',
         (

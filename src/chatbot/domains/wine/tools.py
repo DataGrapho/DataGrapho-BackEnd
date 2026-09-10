@@ -81,10 +81,11 @@ class GetWineCatalogSummaryTool(Tool):
             description=(
                 'Resumir vinhos por pais, regiao, produtor, uva, cor ou tipo. A fonte pode '
                 'ser catalogo, historico ou todos. A fonte final sera determinada pelo backend '
-                'a partir da pergunta: perguntas genericas sempre usam todos. Retorna todos '
-                'os lideres para representar empates corretamente.'
+                'a partir da pergunta: perguntas genericas sempre usam todos. Quando o usuario '
+                'pedir uma lista, ranking ou top N, informe N no parametro limit. Retorna todos '
+                'os grupos para representar empates corretamente.'
             ),
-            parameters={'group_by': 'string', 'source': 'string'},
+            parameters={'group_by': 'string', 'source': 'string', 'limit': 'integer'},
             required_parameters=['group_by'],
             domain='wine',
         )
@@ -94,7 +95,11 @@ class GetWineCatalogSummaryTool(Tool):
         if not group_by:
             raise ValueError('group_by parameter is required')
         source = str(params.get('source', 'todos') or 'todos').strip()
-        return repository.get_catalog_summary(group_by, source)
+        result = dict(repository.get_catalog_summary(group_by, source))
+        requested_limit = params.get('limit')
+        if requested_limit not in (None, ''):
+            result['requested_limit'] = max(1, int(requested_limit))
+        return result
 
 
 class GetConsumoByPeriodTool(Tool):

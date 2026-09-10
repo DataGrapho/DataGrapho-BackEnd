@@ -10,7 +10,7 @@ from django.db.models import Sum, Count, Avg, Q, Prefetch
 from django.core.cache import cache
 from django.conf import settings
 
-from chatbot.models import FatoConsumoVinho, Wine, WineGrape, WineOffer
+from chatbot.models import Wine, WineConsumption, WineGrape, WineOffer
 
 
 logger = logging.getLogger(__name__)
@@ -45,29 +45,7 @@ class WineRepository:
             cache.set(cache_key, result, self.cache_ttl)
             return result
 
-        wines = (
-            FatoConsumoVinho.objects.filter(vinho__icontains=normalized_name)
-            .values("vinho", "produtor", "pais", "regiao", "safra", "preco")
-            .distinct()
-            .order_by("vinho", "safra")[:10]
-        )
-
-        result = {
-            "query": normalized_name,
-            "count": len(wines),
-            "wines": [
-                {
-                    "nome": wine["vinho"],
-                    "produtor": wine["produtor"],
-                    "pais": wine["pais"],
-                    "regiao": wine["regiao"],
-                    "safra": wine["safra"],
-                    "preco": float(wine["preco"]) if wine["preco"] is not None else None,
-                    "moeda": "BRL",
-                }
-                for wine in wines
-            ],
-        }
+        result = {"query": normalized_name, "count": 0, "wines": []}
         cache.set(cache_key, result, self.cache_ttl)
         return result
 
@@ -240,22 +218,33 @@ class WineRepository:
                     )
 
         if normalized_source in {'historico', 'todos'}:
-            history_field = {
-                'pais': 'pais', 'regiao': 'regiao', 'produtor': 'produtor',
-                'uva': 'uva', 'cor': 'cor', 'tipo': 'teor_acucar',
-            }[dimension]
-            history_rows = (
-                FatoConsumoVinho.objects.order_by('-data_consumo')
-                .values('vinho', 'preco', history_field)
-            )
-            for row in history_rows:
-                add_wine(
-                    row[history_field],
-                    row['vinho'],
-                    row['preco'],
-                    None,
-                    'historico',
+            history_wines = (
+                Wine.objects.filter(consumptions__isnull=False)
+                .select_related('producer__region__country')
+                .prefetch_related('grape_links__grape')
+                .annotate(
+                    average_rating=Avg('reviews__score'),
+                    historical_price=Avg('consumptions__unit_price'),
                 )
+                .distinct()
+            )
+            for wine in history_wines:
+                group_values = {
+                    'pais': [wine.producer.region.country.name],
+                    'regiao': [wine.producer.region.name],
+                    'produtor': [wine.producer.name],
+                    'uva': [link.grape.name for link in wine.grape_links.all()],
+                    'cor': [wine.get_color_display()],
+                    'tipo': [wine.get_sweetness_display()],
+                }[dimension]
+                for group_value in group_values:
+                    add_wine(
+                        group_value,
+                        wine.name,
+                        wine.historical_price,
+                        wine.average_rating,
+                        'historico',
+                    )
 
         groups = []
         for bucket in buckets.values():
@@ -390,12 +379,14 @@ class WineRepository:
         
         logger.info(f"Cache MISS: get_consumo_by_period({start_date}, {end_date})")
         
-        consumos = FatoConsumoVinho.objects.filter(
-            data_consumo__gte=start_date,
-            data_consumo__lte=end_date
-        ).order_by('-data_consumo')
+        consumos = WineConsumption.objects.filter(
+            consumed_at__gte=start_date,
+            consumed_at__lte=end_date,
+        ).select_related(
+            'wine__producer__region__country'
+        ).prefetch_related('wine__grape_links__grape').order_by('-consumed_at')
         
-        total_qtd = consumos.aggregate(total=Sum('qtd'))['total'] or 0
+        total_qtd = consumos.aggregate(total=Sum('quantity'))['total'] or 0
         total_valor = consumos.aggregate(total=Sum('total'))['total'] or Decimal('0.00')
         
         result = {
@@ -409,17 +400,17 @@ class WineRepository:
             'count': consumos.count(),
             'records': [
                 {
-                    'data': c.data_consumo.isoformat(),
-                    'vinho': c.vinho,
-                    'uva': c.uva,
-                    'safra': c.safra,
-                    'produtor': c.produtor,
-                    'cor': c.cor,
-                    'pais': c.pais,
-                    'regiao': c.regiao,
-                    'opiniao': c.opiniao,
-                    'preco': float(c.preco) if c.preco else None,
-                    'quantidade': c.qtd,
+                    'data': c.consumed_at.isoformat(),
+                    'vinho': c.wine.name,
+                    'uva': ', '.join(link.grape.name for link in c.wine.grape_links.all()),
+                    'safra': c.vintage_year,
+                    'produtor': c.wine.producer.name,
+                    'cor': c.wine.get_color_display(),
+                    'pais': c.wine.producer.region.country.name,
+                    'regiao': c.wine.producer.region.name,
+                    'opiniao': c.opinion,
+                    'preco': float(c.unit_price) if c.unit_price else None,
+                    'quantidade': c.quantity,
                     'total': float(c.total) if c.total else None,
                 }
                 for c in consumos[:50]
@@ -441,15 +432,16 @@ class WineRepository:
         if cached_result is not None:
             return cached_result
         
-        consumos_by_country = FatoConsumoVinho.objects.filter(
-            data_consumo__gte=start_date,
-            data_consumo__lte=end_date,
-            pais__isnull=False
-        ).values('pais').annotate(
-            total_qtd=Sum('qtd'),
+        consumos_by_country = WineConsumption.objects.filter(
+            consumed_at__gte=start_date,
+            consumed_at__lte=end_date,
+        ).values(
+            'wine__producer__region__country__name'
+        ).annotate(
+            total_qtd=Sum('quantity'),
             total_valor=Sum('total'),
-            count=Count('id_fato_consumo'),
-            preco_medio=Avg('preco')
+            count=Count('id'),
+            preco_medio=Avg('unit_price'),
         ).order_by('-total_qtd')
         
         grand_total = sum(item['total_qtd'] for item in consumos_by_country)
@@ -462,7 +454,7 @@ class WineRepository:
             },
             'countries': [
                 {
-                    'pais': item['pais'],
+                    'pais': item['wine__producer__region__country__name'],
                     'quantidade': item['total_qtd'],
                     'valor_total': float(item['total_valor']) if item['total_valor'] else 0,
                     'count': item['count'],
@@ -487,20 +479,24 @@ class WineRepository:
         if cached_result is not None:
             return cached_result
         
-        top_wines = FatoConsumoVinho.objects.values('vinho', 'produtor', 'pais').annotate(
-            total_consumo=Sum('qtd'),
+        top_wines = WineConsumption.objects.values(
+            'wine__name',
+            'wine__producer__name',
+            'wine__producer__region__country__name',
+        ).annotate(
+            total_consumo=Sum('quantity'),
             total_valor=Sum('total'),
-            preco_medio=Avg('preco'),
-            count=Count('id_fato_consumo')
+            preco_medio=Avg('unit_price'),
+            count=Count('id'),
         ).order_by('-total_consumo')[:limit]
         
         result = {
             'count': len(top_wines),
             'wines': [
                 {
-                    'vinho': wine['vinho'],
-                    'produtor': wine['produtor'],
-                    'pais': wine['pais'],
+                    'vinho': wine['wine__name'],
+                    'produtor': wine['wine__producer__name'],
+                    'pais': wine['wine__producer__region__country__name'],
                     'total_consumo': wine['total_consumo'],
                     'valor_total': float(wine['total_valor']) if wine['total_valor'] else 0,
                     'preco_medio': float(wine['preco_medio']) if wine['preco_medio'] else 0,
@@ -523,23 +519,28 @@ class WineRepository:
         if cached_result is not None:
             return cached_result
         
-        wines = FatoConsumoVinho.objects.filter(
-            opiniao__icontains=opinion
-        ).values('vinho', 'produtor', 'pais', 'opiniao', 'preco', 'data_consumo').annotate(
-            total_consumo=Sum('qtd')
-        ).order_by('-data_consumo')[:50]
+        wines = WineConsumption.objects.filter(
+            opinion__icontains=opinion
+        ).values(
+            'wine__name',
+            'wine__producer__name',
+            'wine__producer__region__country__name',
+            'opinion', 'unit_price', 'consumed_at',
+        ).annotate(
+            total_consumo=Sum('quantity')
+        ).order_by('-consumed_at')[:50]
         
         result = {
             'opinion_filter': opinion,
             'count': len(wines),
             'wines': [
                 {
-                    'vinho': wine['vinho'],
-                    'produtor': wine['produtor'],
-                    'pais': wine['pais'],
-                    'opiniao': wine['opiniao'],
-                    'preco': float(wine['preco']) if wine['preco'] else None,
-                    'data_consumo': wine['data_consumo'].isoformat(),
+                    'vinho': wine['wine__name'],
+                    'produtor': wine['wine__producer__name'],
+                    'pais': wine['wine__producer__region__country__name'],
+                    'opiniao': wine['opinion'],
+                    'preco': float(wine['unit_price']) if wine['unit_price'] else None,
+                    'data_consumo': wine['consumed_at'].isoformat(),
                     'total_consumo': wine['total_consumo']
                 }
                 for wine in wines

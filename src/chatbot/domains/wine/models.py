@@ -5,7 +5,6 @@ tenham uma única fonte de verdade.
 """
 
 from chatbot.models import (
-    FatoConsumoVinho,
     GrapeVariety,
     Wine,
     WineCountry,
@@ -14,10 +13,10 @@ from chatbot.models import (
     WineProducer,
     WineRegion,
     WineReview,
+    WineConsumption,
 )
 
 __all__ = [
-    'FatoConsumoVinho',
     'WineCountry',
     'WineRegion',
     'WineProducer',
@@ -26,4 +25,5 @@ __all__ = [
     'WineGrape',
     'WineOffer',
     'WineReview',
+    'WineConsumption',
 ]
