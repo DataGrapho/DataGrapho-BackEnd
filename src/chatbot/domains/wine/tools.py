@@ -199,7 +199,12 @@ class GetTopWinesTool(Tool):
     def __init__(self):
         super().__init__(
             name='get_top_wines',
-            description='Obter os vinhos mais consumidos. O limite padrão é 10, máximo é 100.',
+            description=(
+                'Obter o ranking de vinhos por total de unidades consumidas. '
+                'A resposta diferencia unidades de eventos, identifica dados demonstrativos '
+                'e inclui todos os vinhos empatados na posição de corte. '
+                'O limite padrão é 10, máximo é 100.'
+            ),
             parameters={
                 'limit': 'integer'
             },

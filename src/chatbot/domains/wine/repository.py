@@ -470,7 +470,7 @@ class WineRepository:
         return result
     
     def get_top_wines(self, limit: int = 10) -> Dict[str, Any]:
-        """Obter os vinhos mais consumidos"""
+        """Obter os vinhos mais consumidos, preservando empates no corte."""
         limit = max(1, min(limit, 100))
         
         cache_key = f'top_wines_{limit}'
@@ -480,18 +480,43 @@ class WineRepository:
             return cached_result
         
         top_wines = WineConsumption.objects.values(
+            'wine_id',
             'wine__name',
             'wine__producer__name',
             'wine__producer__region__country__name',
+            'wine__is_demo',
         ).annotate(
             total_consumo=Sum('quantity'),
             total_valor=Sum('total'),
             preco_medio=Avg('unit_price'),
             count=Count('id'),
-        ).order_by('-total_consumo')[:limit]
+        ).order_by('-total_consumo', 'wine__name', 'wine_id')
+
+        ranked_wines = list(top_wines)
+        selected_wines = ranked_wines[:limit]
+        cutoff_units = (
+            selected_wines[-1]['total_consumo'] if selected_wines else None
+        )
+        if cutoff_units is not None:
+            selected_wines = [
+                wine for wine in ranked_wines
+                if wine['total_consumo'] >= cutoff_units
+            ]
+
+        tie_at_cutoff = len(selected_wines) > min(limit, len(ranked_wines))
         
         result = {
-            'count': len(top_wines),
+            'count': len(selected_wines),
+            'requested_limit': limit,
+            'returned_count': len(selected_wines),
+            'total_ranked_wines': len(ranked_wines),
+            'ranking_metric': 'total_units_consumed',
+            'cutoff_units': cutoff_units,
+            'tie_at_cutoff': tie_at_cutoff,
+            'note': (
+                'O ranking soma as unidades consumidas. vezes_consumido representa '
+                'a quantidade de eventos de consumo. Todos os empatados no corte são retornados.'
+            ),
             'wines': [
                 {
                     'vinho': wine['wine__name'],
@@ -501,9 +526,10 @@ class WineRepository:
                     'valor_total': float(wine['total_valor']) if wine['total_valor'] else 0,
                     'preco_medio': float(wine['preco_medio']) if wine['preco_medio'] else 0,
                     'vezes_consumido': wine['count'],
+                    'is_demo': wine['wine__is_demo'],
                     'currency': 'BRL'
                 }
-                for wine in top_wines
+                for wine in selected_wines
             ]
         }
         
