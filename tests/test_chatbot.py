@@ -271,7 +271,7 @@ class FunctionCallingEngineTest(TestCase):
         self.assertEqual(result.error, 'DATABASE_TOOL_REQUIRED')
         self.assertNotIn('20', result.response)
 
-    def test_summary_uses_structured_source_selected_by_ai(self):
+    def test_generic_summary_question_uses_all_sources(self):
         registry = ToolRegistry()
         registry.register_tool(GetWineCatalogSummaryTool())
         repository = FakeSummaryRepository()
@@ -287,9 +287,9 @@ class FunctionCallingEngineTest(TestCase):
             user_message='Qual país possui mais vinhos cadastrados?',
         )
 
-        self.assertEqual(result['source'], 'catalogo')
+        self.assertEqual(result['source'], 'todos')
 
-    def test_summary_source_defaults_to_all_and_accepts_history(self):
+    def test_explicit_summary_source_is_resolved_from_question(self):
         registry = ToolRegistry()
         registry.register_tool(GetWineCatalogSummaryTool())
         repository = FakeSummaryRepository()
@@ -310,7 +310,7 @@ class FunctionCallingEngineTest(TestCase):
             user_message='No histórico de consumo, qual país lidera?',
         )
 
-        self.assertEqual(catalog['source'], 'todos')
+        self.assertEqual(catalog['source'], 'catalogo')
         self.assertEqual(history['source'], 'historico')
 
     def test_search_filters_are_limited_to_current_question(self):
@@ -397,6 +397,25 @@ class FunctionCallingEngineTest(TestCase):
         self.assertIn('Argentina', response)
         self.assertIn('Itália', response)
         self.assertNotIn('Chile', response)
+
+    def test_which_countries_question_lists_every_group(self):
+        result = {
+            'source': 'todos',
+            'groups': [
+                {'grupo': 'Argentina', 'quantidade_vinhos': 24},
+                {'grupo': 'Brasil', 'quantidade_vinhos': 15},
+                {'grupo': 'Chile', 'quantidade_vinhos': 17},
+            ],
+        }
+
+        response = FunctionCallingEngine._render_wine_summary(
+            result, 'Nós temos vinhos de quais países na nossa base de dados?'
+        )
+
+        self.assertIn('3 grupos', response)
+        self.assertIn('Argentina', response)
+        self.assertIn('Brasil', response)
+        self.assertIn('Chile', response)
 
     def test_common_ranking_phrasings_extract_requested_size(self):
         messages = (

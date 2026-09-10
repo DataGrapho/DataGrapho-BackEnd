@@ -249,10 +249,9 @@ class FunctionCallingEngine:
             raise ValueError(f"Invalid JSON arguments: {e}")
 
         if tool_name == 'get_wine_database_summary':
-            source = self._normalize_plain_text(arguments.get('source', 'todos'))
-            arguments['source'] = source if source in {'catalogo', 'historico', 'todos'} else 'todos'
+            arguments['source'] = self._resolve_wine_summary_source(user_message)
             logger.info(
-                'Validated wine summary source requested by AI: %s',
+                'Validated wine summary source from the current question: %s',
                 arguments['source'],
             )
         elif tool_name == 'search_wine_catalog':
@@ -492,6 +491,17 @@ class FunctionCallingEngine:
         return None
 
     @classmethod
+    def _requests_complete_list(cls, user_message: str) -> bool:
+        """Fallback para provedores que omitem o modo estruturado da resposta."""
+        message = cls._normalize_plain_text(user_message)
+        list_markers = (
+            'quais paises', 'quais os paises', 'de quais paises',
+            'liste os paises', 'listar os paises', 'mostre os paises',
+            'todos os paises', 'lista de paises',
+        )
+        return any(marker in message for marker in list_markers)
+
+    @classmethod
     def _render_wine_summary(cls, result: Dict[str, Any], user_message: str) -> str:
         groups = result.get('groups', [])
         if not groups:
@@ -506,7 +516,21 @@ class FunctionCallingEngine:
         if requested is None:
             # Compatibilidade caso o provedor não envie o parâmetro estruturado.
             requested = cls._extract_requested_ranking_size(user_message)
-        if requested is not None:
+        result_mode = result.get('result_mode')
+        if result_mode == 'list' or (
+            result_mode is None and cls._requests_complete_list(user_message)
+        ):
+            lines = [
+                f"- **{group['grupo']}**: {group['quantidade_vinhos']} vinhos distintos."
+                for group in groups
+            ]
+            return (
+                f"Considerando {source_text}, foram encontrados {len(groups)} grupos:\n\n"
+                + '\n'.join(lines)
+                + '\n\nRegra: cada nome de vinho é contado uma única vez por grupo.'
+            )
+        if requested is not None or result_mode == 'ranking':
+            requested = requested or len(groups)
             cutoff_index = min(requested, len(groups)) - 1
             cutoff_count = groups[cutoff_index]['quantidade_vinhos']
             selected = [
