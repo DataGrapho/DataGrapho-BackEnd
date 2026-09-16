@@ -36,8 +36,9 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     if: |
-      (github.event_name == 'pull_request' && contains(github.head_ref, 'release/')) ||
-      (github.event_name == 'push' && contains(github.ref, 'release/'))
+      github.event_name == 'pull_request' &&
+      github.base_ref == 'main' &&
+      github.event.pull_request.merged == true
 
   cd-deploy:
     uses: ./.github/workflows/cd-deploy.yaml
@@ -49,7 +50,6 @@ jobs:
       SSH_PORT: ${{ secrets.SSH_PORT }}
     if: |
       github.event_name == 'pull_request' &&
-      contains(github.head_ref, 'release/') &&
       github.base_ref == 'main' &&
       github.event.pull_request.merged == true
 
