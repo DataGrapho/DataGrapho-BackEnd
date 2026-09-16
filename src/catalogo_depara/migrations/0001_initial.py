@@ -7,25 +7,35 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='CatalogoDePara',
+            name="CatalogoDePara",
             fields=[
-                ('id_catalogo', models.AutoField(primary_key=True, serialize=False, verbose_name='ID do Catálogo')),
-                ('tabela_origem', models.CharField(max_length=100, verbose_name='Tabela de Origem')),
-                ('descricao', models.TextField(blank=True, null=True, verbose_name='Descrição')),
-                ('ativo', models.BooleanField(default=True, verbose_name='Ativo')),
-                ('criado_em', models.DateTimeField(auto_now_add=True, verbose_name='Criado em')),
-                ('atualizado_em', models.DateTimeField(auto_now=True, verbose_name='Atualizado em')),
+                (
+                    "id_catalogo",
+                    models.AutoField(
+                        primary_key=True, serialize=False, verbose_name="ID do Catálogo"
+                    ),
+                ),
+                (
+                    "tabela_origem",
+                    models.CharField(max_length=100, verbose_name="Tabela de Origem"),
+                ),
+                ("descricao", models.TextField(blank=True, null=True, verbose_name="Descrição")),
+                ("ativo", models.BooleanField(default=True, verbose_name="Ativo")),
+                ("criado_em", models.DateTimeField(auto_now_add=True, verbose_name="Criado em")),
+                (
+                    "atualizado_em",
+                    models.DateTimeField(auto_now=True, verbose_name="Atualizado em"),
+                ),
             ],
             options={
-                'verbose_name': 'Catálogo DePara',
-                'verbose_name_plural': 'Catálogos DePara',
-                'db_table': 'catalogo_depara',
-                'ordering': ['-criado_em'],
+                "verbose_name": "Catálogo DePara",
+                "verbose_name_plural": "Catálogos DePara",
+                "db_table": "catalogo_depara",
+                "ordering": ["-criado_em"],
             },
         ),
     ]

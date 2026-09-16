@@ -11,6 +11,8 @@ on:
         required: true
       SSH_PORT:
         required: true
+      AI_API_KEY:
+        required: false
 
 concurrency:
   group: build-${{ github.ref }}

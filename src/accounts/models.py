@@ -58,7 +58,9 @@ class Empresa(models.Model):
 
 class Filial(models.Model):
     id_filial = models.AutoField(primary_key=True, db_column="id_filial")
-    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, db_column="id_empresa", related_name="filiais")
+    empresa = models.ForeignKey(
+        Empresa, on_delete=models.PROTECT, db_column="id_empresa", related_name="filiais"
+    )
     nome = models.CharField(max_length=200)
     endereco = models.TextField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
@@ -73,7 +75,9 @@ class Filial(models.Model):
 
 class Setor(models.Model):
     id_setor = models.AutoField(primary_key=True, db_column="id_setor")
-    filial = models.ForeignKey(Filial, on_delete=models.PROTECT, db_column="id_filial", related_name="setores")
+    filial = models.ForeignKey(
+        Filial, on_delete=models.PROTECT, db_column="id_filial", related_name="setores"
+    )
     nome = models.CharField(max_length=200)
     descricao = models.TextField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
@@ -127,8 +131,12 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
 class UsuarioAcesso(models.Model):
     id = models.AutoField(primary_key=True)
-    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, db_column="id_usuario", related_name="acessos")
-    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, db_column="id_empresa", related_name="acessos")
+    usuario = models.ForeignKey(
+        Usuario, on_delete=models.PROTECT, db_column="id_usuario", related_name="acessos"
+    )
+    empresa = models.ForeignKey(
+        Empresa, on_delete=models.PROTECT, db_column="id_empresa", related_name="acessos"
+    )
     filial = models.ForeignKey(
         Filial,
         on_delete=models.PROTECT,
@@ -145,7 +153,9 @@ class UsuarioAcesso(models.Model):
         null=True,
         blank=True,
     )
-    perfil = models.ForeignKey(Perfil, on_delete=models.PROTECT, db_column="id_perfil", related_name="acessos")
+    perfil = models.ForeignKey(
+        Perfil, on_delete=models.PROTECT, db_column="id_perfil", related_name="acessos"
+    )
 
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(default=timezone.now)
@@ -172,7 +182,12 @@ class UsuarioAcesso(models.Model):
 
 class PasswordResetToken(models.Model):
     id = models.AutoField(primary_key=True)
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, db_column="id_usuario", related_name="password_reset_tokens")
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        db_column="id_usuario",
+        related_name="password_reset_tokens",
+    )
     token_hash = models.CharField(max_length=64, unique=True)
     criado_em = models.DateTimeField(default=timezone.now)
     expires_at = models.DateTimeField()

@@ -9,30 +9,55 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('catalogo_depara', '0001_initial'),
+        ("catalogo_depara", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DePara',
+            name="DePara",
             fields=[
-                ('id_depara', models.AutoField(primary_key=True, serialize=False, verbose_name='ID DePara')),
-                ('id_acesso', models.IntegerField(blank=True, null=True, verbose_name='ID Acesso')),
-                ('codigo_origem', models.CharField(max_length=100, verbose_name='Código de Origem')),
-                ('descricao_origem', models.TextField(blank=True, null=True, verbose_name='Descrição de Origem')),
-                ('codigo_destino', models.CharField(max_length=100, verbose_name='Código de Destino')),
-                ('descricao_destino', models.TextField(blank=True, null=True, verbose_name='Descrição de Destino')),
-                ('ativo', models.BooleanField(default=True, verbose_name='Ativo')),
-                ('criado_em', models.DateTimeField(auto_now_add=True, verbose_name='Criado em')),
-                ('atualizado_em', models.DateTimeField(auto_now=True, verbose_name='Atualizado em')),
-                ('id_catalogo', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='catalogo_depara.catalogodepara', verbose_name='ID Catálogo')),
+                (
+                    "id_depara",
+                    models.AutoField(primary_key=True, serialize=False, verbose_name="ID DePara"),
+                ),
+                ("id_acesso", models.IntegerField(blank=True, null=True, verbose_name="ID Acesso")),
+                (
+                    "codigo_origem",
+                    models.CharField(max_length=100, verbose_name="Código de Origem"),
+                ),
+                (
+                    "descricao_origem",
+                    models.TextField(blank=True, null=True, verbose_name="Descrição de Origem"),
+                ),
+                (
+                    "codigo_destino",
+                    models.CharField(max_length=100, verbose_name="Código de Destino"),
+                ),
+                (
+                    "descricao_destino",
+                    models.TextField(blank=True, null=True, verbose_name="Descrição de Destino"),
+                ),
+                ("ativo", models.BooleanField(default=True, verbose_name="Ativo")),
+                ("criado_em", models.DateTimeField(auto_now_add=True, verbose_name="Criado em")),
+                (
+                    "atualizado_em",
+                    models.DateTimeField(auto_now=True, verbose_name="Atualizado em"),
+                ),
+                (
+                    "id_catalogo",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="catalogo_depara.catalogodepara",
+                        verbose_name="ID Catálogo",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'DePara',
-                'verbose_name_plural': 'DePara',
-                'db_table': 'depara',
-                'ordering': ['-criado_em'],
-                'unique_together': {('id_catalogo', 'codigo_origem', 'codigo_destino')},
+                "verbose_name": "DePara",
+                "verbose_name_plural": "DePara",
+                "db_table": "depara",
+                "ordering": ["-criado_em"],
+                "unique_together": {("id_catalogo", "codigo_origem", "codigo_destino")},
             },
         ),
     ]

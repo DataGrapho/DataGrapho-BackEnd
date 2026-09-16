@@ -1,19 +1,17 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
     container_name: datagrapho_postgres
     environment:
-      POSTGRES_DB: datagrapho
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-datagrapho}
+      POSTGRES_USER: ${POSTGRES_USER:-datagrapho}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-datagrapho}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,20 +21,46 @@ services:
     container_name: datagrapho_django
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
-    volumes:
-      - .:/app
+             exec gunicorn datagrapho.wsgi:application
+             --bind 0.0.0.0:8000
+             --workers ${GUNICORN_WORKERS:-3}
+             --timeout ${GUNICORN_TIMEOUT:-120}"
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
     environment:
-      - DEBUG=True
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:?Defina SECRET_KEY no arquivo .env}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-True}
+      - CSRF_COOKIE_SECURE=${CSRF_COOKIE_SECURE:-True}
+      - SECURE_HSTS_SECONDS=${SECURE_HSTS_SECONDS:-31536000}
+      - SECURE_HSTS_INCLUDE_SUBDOMAINS=${SECURE_HSTS_INCLUDE_SUBDOMAINS:-True}
+      - SECURE_HSTS_PRELOAD=${SECURE_HSTS_PRELOAD:-False}
       - PYTHONPATH=/app/src
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,pendengas.com.br}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://pendengas.com.br}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-https://pendengas.com.br}
+      - FRONTEND_PASSWORD_RESET_URL=${FRONTEND_PASSWORD_RESET_URL:-https://pendengas.com.br/reset-password?token={token}}
       - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=datagrapho
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - DB_NAME=${DB_NAME:-datagrapho}
+      - DB_USER=${DB_USER:-datagrapho}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_HOST=db
       - DB_PORT=5432
+      # Chatbot AI Configuration
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
+      - AI_API_KEY=${AI_API_KEY:?Defina AI_API_KEY no arquivo .env}
+      - AI_MODEL=${AI_MODEL:-gemini-2.5-flash}
+      - AI_BASE_URL=${AI_BASE_URL:-}
+      - AI_TIMEOUT=${AI_TIMEOUT:-90}
+      - AI_MAX_RETRIES=${AI_MAX_RETRIES:-3}
+      - AI_TEMPERATURE=${AI_TEMPERATURE:-0.1}
+      - MAX_TOOL_CALLS_PER_QUESTION=${MAX_TOOL_CALLS_PER_QUESTION:-5}
+      - CHATBOT_RATE_LIMIT=${CHATBOT_RATE_LIMIT:-10}
+      - CHATBOT_CACHE_TTL=${CHATBOT_CACHE_TTL:-300}
+      - CHATBOT_SESSION_EXPIRY=${CHATBOT_SESSION_EXPIRY:-3600}
+      - CHATBOT_ACTIVE_DOMAINS=${CHATBOT_ACTIVE_DOMAINS:-wine}
     depends_on:
       db:
         condition: service_healthy

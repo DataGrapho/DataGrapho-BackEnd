@@ -25,7 +25,15 @@ class UsuarioAdmin(UserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "cpf", "nome", "password1", "password2", "is_active", "is_staff"),
+                "fields": (
+                    "email",
+                    "cpf",
+                    "nome",
+                    "password1",
+                    "password2",
+                    "is_active",
+                    "is_staff",
+                ),
             },
         ),
     )

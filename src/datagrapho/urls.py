@@ -11,8 +11,9 @@ urlpatterns = [
     path("api/auth/", include("accounts.router")),
     path("api/catalogo/", include("catalogo_depara.router")),
     path("api/depara/", include("depara.router")),
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("api/chatbot/", include("chatbot.router")),
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 ]
 
 if settings.DEBUG:

@@ -12,7 +12,7 @@ from .service import CatalogoDeparaService
 
 class CatalogoDeparaViewSet(viewsets.ModelViewSet):
     """Manage CatalogoDePara - data mapping catalogs.
-    
+
     List all catalogs, create new ones, and manage individual catalog details.
     Supports filtering by status and search terms.
     """
@@ -32,7 +32,7 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """List all catalogs with optional filtering.
-        
+
         Query parameters:
         - ativo: Filter by status (true/false)
         - tabela_origem: Filter by source table
@@ -46,7 +46,9 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             tabela_origem = request.query_params.get("tabela_origem")
             search = request.query_params.get("search")
 
-            catalogs = self.service.list_catalogos(ativo=ativo, tabela_origem=tabela_origem, search=search)
+            catalogs = self.service.list_catalogos(
+                ativo=ativo, tabela_origem=tabela_origem, search=search
+            )
 
             serializer = self.get_serializer(catalogs, many=True)
 
@@ -60,7 +62,9 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def create(self, request, *args, **kwargs):
         """Create a new catalog."""
@@ -81,7 +85,9 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def retrieve(self, request, *args, **kwargs):
         """Get a specific catalog by ID."""
@@ -103,7 +109,9 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": True, "data": serializer.data}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def update(self, request, *args, **kwargs):
         """Update a catalog (full update)."""
@@ -136,7 +144,9 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def partial_update(self, request, *args, **kwargs):
         """Partial update a catalog."""
@@ -167,7 +177,9 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=["get"])
     def total_count(self, request):
@@ -181,7 +193,9 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             return Response({"success": True, "total": count}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=["post"])
     def activate(self, request, id_catalogo=None):
@@ -209,7 +223,9 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=["post"])
     def deactivate(self, request, id_catalogo=None):
@@ -237,4 +253,6 @@ class CatalogoDeparaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

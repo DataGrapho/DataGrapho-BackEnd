@@ -1,4 +1,5 @@
 Django
+gunicorn==23.0.0
 djangorestframework
 djangorestframework-simplejwt
 drf-spectacular
@@ -6,3 +7,11 @@ django-cors-headers
 python-dotenv
 psycopg2-binary
 Pillow
+openai>=1.30.0
+anthropic==0.18.1
+google-genai>=1.0.0
+httpx>=0.28.1
+hypothesis==6.98.0
+python-dateutil
+pytest
+pytest-django
