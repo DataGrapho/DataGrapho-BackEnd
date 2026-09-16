@@ -24,5 +24,5 @@ COPY . /app/
 # Expose port
 EXPOSE 8000
 
-# Run Django application
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run the production WSGI server. Database migrations are orchestrated by Compose.
+CMD ["gunicorn", "datagrapho.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
