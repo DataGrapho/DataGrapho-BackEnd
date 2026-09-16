@@ -18,7 +18,7 @@ class OpenAIProvider(AIProvider):
         self.base_url = base_url
         super().__init__(api_key, model, timeout, max_retries)
         
-        client_kwargs = {
+        client_kwargs: Dict[str, Any] = {
             "api_key": api_key,
             "timeout": timeout
         }
@@ -42,7 +42,7 @@ class OpenAIProvider(AIProvider):
         tools: Optional[List[Dict[str, Any]]] = None,
         temperature: float = 0.7
     ) -> AIResponse:
-        system_prompt = {
+        system_prompt: Dict[str, Any] = {
             "role": "system",
             "content": (
                 "Você é um assistente financeiro com acesso a um banco de dados. "
@@ -70,7 +70,7 @@ class OpenAIProvider(AIProvider):
         system_prompt["content"] = settings.CHATBOT_CONFIG.get("SYSTEM_INSTRUCTION")
         openai_messages = [system_prompt] + self._format_messages(messages)
         
-        request_params = {
+        request_params: Dict[str, Any] = {
             "model": self.model,
             "messages": openai_messages,
             "temperature": temperature
@@ -168,7 +168,7 @@ class OpenAIProvider(AIProvider):
         return tool_calls
     
     def _format_messages(self, messages: List[AIMessage]) -> List[Dict[str, Any]]:
-        openai_messages = []
+        openai_messages: List[Dict[str, Any]] = []
         
         for msg in messages:
             if msg.role == "tool":

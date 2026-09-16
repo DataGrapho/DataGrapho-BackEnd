@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from django.conf import settings
 
-from chatbot.core.ai_providers import get_ai_provider, AIMessage, AIResponse
+from chatbot.core.ai_providers import get_ai_provider, AIMessage
 from chatbot.core.tool_registry import get_tool_registry
 from chatbot.core.domain_loader import get_all_domain_repositories
 
@@ -51,7 +51,7 @@ class FunctionCallingEngine:
         messages = conversation_history.copy() if conversation_history else []
         messages.append(AIMessage(role='user', content=user_message))
         
-        tools_used = []
+        tools_used: List[str] = []
         tool_calls_count = 0
         successful_tool_results = []
         grounding_retry_sent = False

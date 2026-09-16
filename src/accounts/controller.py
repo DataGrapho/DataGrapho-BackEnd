@@ -49,7 +49,7 @@ class LoginView(TokenObtainPairView):
 
 class MeView(APIView):
     """Get current authenticated user information."""
-    serializer_class = UsuarioMeDto # garente que use o DTO certo *Rafa passou aqui
+    serializer_class = UsuarioMeDto  # garante que o endpoint use o DTO correto
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -69,7 +69,7 @@ class MeView(APIView):
 
 class RegisterView(APIView):
     """Create a user account as an authenticated administrator only."""
-    serializer_class = RegisterDto # garente que use o DTO certo *Rafa passou aqui
+    serializer_class = RegisterDto  # garante que o endpoint use o DTO correto
     # A rota nunca deve se tornar p├║blica por causa de uma configura├º├úo de
     # ambiente.  O JWT deve pertencer a um usu├írio com ``is_staff=True``.
     permission_classes = [IsAdminUser]

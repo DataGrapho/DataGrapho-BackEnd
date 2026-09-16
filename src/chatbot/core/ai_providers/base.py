@@ -48,7 +48,7 @@ class AIProvider(ABC):
         pass
     
     @abstractmethod
-    def format_tool_definitions(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def format_tool_definitions(self, tools: List[Dict[str, Any]]) -> List[Any]:
         pass
     
     @abstractmethod
