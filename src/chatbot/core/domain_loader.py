@@ -1,5 +1,4 @@
 from importlib import import_module
-from typing import List
 import logging
 
 from django.conf import settings

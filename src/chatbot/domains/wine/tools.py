@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from datetime import datetime
+from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
 from chatbot.core.base_tool import Tool
@@ -106,7 +106,7 @@ class GetWineCatalogSummaryTool(Tool):
             result['result_mode'] = result_mode
         requested_limit = params.get('limit')
         if requested_limit not in (None, ''):
-            result['requested_limit'] = max(1, int(requested_limit))
+            result['requested_limit'] = max(1, int(str(requested_limit)))
         return result
 
 
@@ -125,18 +125,21 @@ class GetConsumoByPeriodTool(Tool):
         )
     
     def execute(self, repository, **params) -> Dict[str, Any]:
-        start_date = params.get('start_date')
-        end_date = params.get('end_date')
-        
-        if isinstance(start_date, str):
-            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        if isinstance(end_date, str):
-            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        start_date = self._parse_date(params.get('start_date'), 'start_date')
+        end_date = self._parse_date(params.get('end_date'), 'end_date')
         
         if start_date > end_date:
             raise ValueError("start_date must be before or equal to end_date")
         
         return repository.get_consumo_by_period(start_date, end_date)
+
+    @staticmethod
+    def _parse_date(value: Any, parameter: str) -> date:
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            return datetime.strptime(value, '%Y-%m-%d').date()
+        raise ValueError(f"{parameter} must use the YYYY-MM-DD format")
 
 
 class GetConsumoByCountryTool(Tool):
@@ -153,13 +156,13 @@ class GetConsumoByCountryTool(Tool):
         )
     
     def execute(self, repository, **params) -> Dict[str, Any]:
-        period = params.get('period')
+        period = str(params.get('period') or '').strip()
+        if not period:
+            raise ValueError('period parameter is required')
         start_date, end_date = self._parse_period(period)
         return repository.get_consumo_by_country(start_date, end_date)
     
     def _parse_period(self, period: str):
-        from datetime import date
-        
         # Ano completo: "2024"
         if len(period) == 4 and period.isdigit():
             year = int(period)
@@ -212,7 +215,10 @@ class GetTopWinesTool(Tool):
         )
     
     def execute(self, repository, **params) -> Dict[str, Any]:
-        limit = params.get('limit', 10)
+        try:
+            limit = int(str(params.get('limit', 10)))
+        except (TypeError, ValueError):
+            limit = 10
         
         if limit < 1:
             limit = 10
@@ -236,7 +242,7 @@ class GetWinesByOpinionTool(Tool):
         )
     
     def execute(self, repository, **params) -> Dict[str, Any]:
-        opinion = params.get('opinion')
+        opinion = str(params.get('opinion') or '').strip()
         
         if not opinion:
             raise ValueError("opinion parameter is required")
@@ -261,19 +267,18 @@ class ComparePeriodsTool(Tool):
         )
     
     def execute(self, repository, **params) -> Dict[str, Any]:
-        period1_start = params.get('period1_start')
-        period1_end = params.get('period1_end')
-        period2_start = params.get('period2_start')
-        period2_end = params.get('period2_end')
-        
-        if isinstance(period1_start, str):
-            period1_start = datetime.strptime(period1_start, '%Y-%m-%d').date()
-        if isinstance(period1_end, str):
-            period1_end = datetime.strptime(period1_end, '%Y-%m-%d').date()
-        if isinstance(period2_start, str):
-            period2_start = datetime.strptime(period2_start, '%Y-%m-%d').date()
-        if isinstance(period2_end, str):
-            period2_end = datetime.strptime(period2_end, '%Y-%m-%d').date()
+        period1_start = GetConsumoByPeriodTool._parse_date(
+            params.get('period1_start'), 'period1_start'
+        )
+        period1_end = GetConsumoByPeriodTool._parse_date(
+            params.get('period1_end'), 'period1_end'
+        )
+        period2_start = GetConsumoByPeriodTool._parse_date(
+            params.get('period2_start'), 'period2_start'
+        )
+        period2_end = GetConsumoByPeriodTool._parse_date(
+            params.get('period2_end'), 'period2_end'
+        )
         
         return repository.compare_periods(
             period1_start, period1_end,

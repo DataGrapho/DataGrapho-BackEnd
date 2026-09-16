@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import httpx
 from django.conf import settings
@@ -46,7 +46,7 @@ class GeminiProvider(AIProvider):
             temperature=temperature,
             max_output_tokens=4096,
             system_instruction=settings.CHATBOT_CONFIG.get("SYSTEM_INSTRUCTION"),
-            tools=gemini_tools or None,
+            tools=cast(Any, gemini_tools or None),
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
 
@@ -54,7 +54,7 @@ class GeminiProvider(AIProvider):
             try:
                 response = self.client.models.generate_content(
                     model=self.model,
-                    contents=contents,
+                    contents=cast(Any, contents),
                     config=config,
                 )
                 tool_calls = self.parse_tool_calls(response)

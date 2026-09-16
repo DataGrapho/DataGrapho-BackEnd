@@ -2,7 +2,7 @@ import time
 import logging
 import hashlib
 import unicodedata
-from typing import Dict, Any, List
+from typing import Dict, Any, Optional
 from decimal import Decimal
 from datetime import date
 
@@ -58,9 +58,9 @@ class WineRepository:
         grape: str = '',
         color: str = '',
         sweetness: str = '',
-        max_price: float = None,
-        min_rating: float = None,
-        min_grape_varieties: int = None,
+        max_price: Optional[float] = None,
+        min_rating: Optional[float] = None,
+        min_grape_varieties: Optional[int] = None,
         in_stock: bool = False,
         limit: int = 10,
     ) -> Dict[str, Any]:
@@ -161,7 +161,7 @@ class WineRepository:
         if not normalized_source:
             raise ValueError('source must be catalogo, historico or todos')
 
-        buckets = {}
+        buckets: Dict[str, Dict[str, Any]] = {}
 
         def add_wine(group_value, wine_name, price, rating, item_source):
             if not group_value or not wine_name:

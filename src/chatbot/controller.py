@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from chatbot.core.domain_loader import get_all_domain_repositories
 from chatbot.core.tool_registry import get_tool_registry
 from chatbot.dto import ChatRequestSerializer, ChatResponseSerializer
-from chatbot.models import ChatMessage, ChatSession
+from chatbot.models import ChatSession
 from chatbot.service import ChatbotService
 
 
