@@ -21,6 +21,11 @@ jobs:
           pip install -r requirements.txt
       
       - name: run tests
+        env:
+          DEBUG: 'True'
+          SECURE_SSL_REDIRECT: 'False'
+          SESSION_COOKIE_SECURE: 'False'
+          CSRF_COOKIE_SECURE: 'False'
         run: |
           pytest tests
       
