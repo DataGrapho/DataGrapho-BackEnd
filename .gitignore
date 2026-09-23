@@ -77,3 +77,5 @@ pip-delete-this-directory.txt
 # Secrets
 *.pem
 *.key
+
+benchmarks/

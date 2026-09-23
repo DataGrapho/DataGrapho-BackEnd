@@ -35,7 +35,9 @@ class SearchWineCatalogTool(Tool):
             description=(
                 'Pesquisar e recomendar vinhos cruzando catalogo, produtor, regiao, pais, '
                 'uvas, preco, estoque e avaliacao. Use min_grape_varieties=2 para vinhos '
-                'com mais de uma uva. Todos os filtros sao opcionais.'
+                'com mais de uma uva. Todos os filtros sao opcionais. Use in_stock=true '
+                'somente se o usuario pedir vinhos disponiveis ou em estoque; caso '
+                'contrario inclua tambem vinhos sem estoque.'
             ),
             parameters={
                 'query': 'string',

@@ -78,7 +78,7 @@ class FunctionCallingEngine:
                 ai_start = time.time()
                 ai_response = self.ai_provider.chat_completion(
                     messages=messages,
-                    tools=tool_definitions,
+                    tools=tool_definitions if tool_calls_count < self.max_tool_calls else [],
                     temperature=self.temperature
                 )
                 ai_duration = time.time() - ai_start
@@ -126,7 +126,9 @@ class FunctionCallingEngine:
                                 user_message=user_message,
                             )
                             tool_duration = time.time() - tool_start
-                            result_content = json.dumps(tool_result, ensure_ascii=False)
+                            result_content = json.dumps(
+                                tool_result, ensure_ascii=False, separators=(',', ':')
+                            )
                             successful_tool_results.append((tool_name, tool_result))
                             
                             logger.info(f"⏱️ Tool {tool_name} executed in {tool_duration:.2f}s")

@@ -2,7 +2,7 @@ import json
 from datetime import date
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from chatbot.core.ai_providers.base import AIResponse
@@ -28,6 +28,7 @@ from chatbot.models import (
     WineReview,
     WineConsumption,
 )
+from chatbot.service import ChatbotService
 
 
 class WineLookupTest(TestCase):
@@ -286,6 +287,38 @@ class FunctionCallingEngineTest(TestCase):
         self.assertEqual(result.tools_used, ["get_wine_by_name"])
         self.assertIn("Portugal", result.response)
 
+    def test_final_turn_omits_tools_after_call_limit(self):
+        class RecordingProvider(FakeAIProvider):
+            def __init__(self):
+                super().__init__()
+                self.tools_sent = []
+                self.tool_results = []
+
+            def chat_completion(self, messages, tools, temperature):
+                self.tools_sent.append(tools)
+                self.tool_results.extend(
+                    message.content for message in messages if message.role == 'tool'
+                )
+                return super().chat_completion(messages, tools, temperature)
+
+        registry = ToolRegistry()
+        registry.register_tool(GetWineByNameTool())
+        provider = RecordingProvider()
+        engine = FunctionCallingEngine(
+            ai_provider=provider,
+            tool_registry=registry,
+            repositories={'wine': FakeWineRepository()},
+        )
+        engine.max_tool_calls = 1
+
+        result = engine.execute_query('Qual o pais e o valor do Vinho X?')
+
+        self.assertIsNone(result.error)
+        self.assertEqual(len(provider.tools_sent[0]), 1)
+        self.assertEqual(provider.tools_sent[1], [])
+        self.assertIn('"count":1', provider.tool_results[-1])
+
+
     def test_factual_wine_question_cannot_be_answered_without_tool(self):
         class HallucinatingProvider:
             def __init__(self):
@@ -396,6 +429,40 @@ class FunctionCallingEngineTest(TestCase):
 
         self.assertIn('Vinho Teste', response)
         self.assertNotIn('Não foram encontrados', response)
+
+
+class ConversationHistoryBudgetTest(TestCase):
+    def test_excludes_tool_entries_before_limiting_and_bounds_text(self):
+        user = get_user_model().objects.create_user(
+            email='history@datagrapho.test',
+            cpf='999.888.777-66',
+            nome='History User',
+            password='strong-password',
+        )
+        session = ChatSession.objects.create(user=user)
+        ChatMessage.objects.create(session=session, role='user', content='pergunta antiga')
+        ChatMessage.objects.create(session=session, role='tool', content='x' * 5000)
+        ChatMessage.objects.create(session=session, role='assistant', content='resposta recente')
+        ChatMessage.objects.create(session=session, role='user', content='nova pergunta longa')
+
+        with override_settings(CHATBOT_CONFIG={
+            'HISTORY_MAX_MESSAGES': 2,
+            'HISTORY_MAX_CHARS': 40,
+        }):
+            history = ChatbotService.__new__(ChatbotService)._get_conversation_history(session)
+
+        self.assertEqual([message.role for message in history], ['assistant', 'user'])
+        self.assertLessEqual(sum(len(message.content) for message in history), 40)
+        self.assertEqual(history[-1].content, 'nova pergunta longa')
+
+        with override_settings(CHATBOT_CONFIG={
+            'HISTORY_MAX_MESSAGES': 10,
+            'HISTORY_MAX_CHARS': 20,
+        }):
+            short_history = ChatbotService.__new__(ChatbotService)._get_conversation_history(session)
+
+        self.assertEqual([message.role for message in short_history], ['user'])
+        self.assertEqual(short_history[0].content, 'nova pergunta longa')
 
 
 class GeminiProviderContractTest(TestCase):

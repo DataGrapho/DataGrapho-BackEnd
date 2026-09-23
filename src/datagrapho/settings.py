@@ -214,6 +214,8 @@ CHATBOT_CONFIG = {
     
     # Execution settings
     'MAX_TOOL_CALLS_PER_QUESTION': int(os.getenv('MAX_TOOL_CALLS_PER_QUESTION', '5')),
+    'HISTORY_MAX_MESSAGES': int(os.getenv('CHATBOT_HISTORY_MAX_MESSAGES', '10')),
+    'HISTORY_MAX_CHARS': int(os.getenv('CHATBOT_HISTORY_MAX_CHARS', '4000')),
     'AI_TEMPERATURE': float(os.getenv('AI_TEMPERATURE', '0.1')),
     'SYSTEM_INSTRUCTION': os.getenv(
         'CHATBOT_SYSTEM_INSTRUCTION',
@@ -226,8 +228,10 @@ CHATBOT_CONFIG = {
             'a fonte descrita pela ferramenta e mencione todos os grupos quando houver empate. '
             'Siga fielmente o campo answer_guidance retornado pelas ferramentas. '
             'Nao reutilize filtros de perguntas anteriores, exceto quando a pergunta atual '
-            'indicar explicitamente que e uma continuacao. Formate reais com duas casas '
+            'indicar explicitamente que e uma continuacao. Nao acrescente restricoes que '
+            'o usuario nao pediu, incluindo disponibilidade em estoque. Formate reais com duas casas '
             'decimais e virgula, por exemplo R$ 99,90. '
+            'Preco em R$ e nota de avaliacao sao dados diferentes; descreva valores em R$ como preco. '
             'Nao chame avaliacoes demonstrativas ou editoriais de avaliacoes de consumidores.'
         ),
     ),
