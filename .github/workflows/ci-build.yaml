@@ -48,3 +48,4 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM'
+          skip-files: '**/pip/_vendor/bom.cdx.json'
