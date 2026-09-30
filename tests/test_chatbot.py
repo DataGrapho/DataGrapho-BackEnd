@@ -318,7 +318,6 @@ class FunctionCallingEngineTest(TestCase):
         self.assertEqual(provider.tools_sent[1], [])
         self.assertIn('"count":1', provider.tool_results[-1])
 
-
     def test_factual_wine_question_cannot_be_answered_without_tool(self):
         class HallucinatingProvider:
             def __init__(self):

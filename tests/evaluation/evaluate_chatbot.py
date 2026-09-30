@@ -25,14 +25,14 @@ import django
 django.setup()
 logging.getLogger().setLevel(logging.ERROR)
 
-from django.core.management import call_command
-from chatbot.core.ai_providers.base import AIMessage
-from chatbot.core.ai_providers.openai_provider import OpenAIProvider
-from chatbot.core.engine import FunctionCallingEngine
-from chatbot.core.tool_registry import ToolRegistry
-from chatbot.domains.wine.repository import WineRepository
-from chatbot.domains.wine.tools import register_wine_tools
-from chatbot.models import (
+from django.core.management import call_command  # noqa: E402
+from chatbot.core.ai_providers.base import AIMessage  # noqa: E402
+from chatbot.core.ai_providers.openai_provider import OpenAIProvider  # noqa: E402
+from chatbot.core.engine import FunctionCallingEngine  # noqa: E402
+from chatbot.core.tool_registry import ToolRegistry  # noqa: E402
+from chatbot.domains.wine.repository import WineRepository  # noqa: E402
+from chatbot.domains.wine.tools import register_wine_tools  # noqa: E402
+from chatbot.models import (  # noqa: E402
     GrapeVariety, Wine, WineConsumption, WineCountry, WineGrape,
     WineOffer, WineProducer, WineRegion, WineReview,
 )
