@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / 'src'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.evaluation.sqlite_settings'
 
-import django
+import django  # noqa: E402
 
 django.setup()
 logging.getLogger().setLevel(logging.ERROR)
