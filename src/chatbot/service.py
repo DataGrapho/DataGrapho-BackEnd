@@ -4,6 +4,7 @@ from typing import Dict, Any, Optional
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 from chatbot.models import ChatSession, ChatMessage
 from chatbot.core.engine import FunctionCallingEngine
@@ -118,7 +119,6 @@ class ChatbotService:
                     user_id=user_id
                 )
                 
-                from django.conf import settings
                 expiry_seconds = settings.CHATBOT_CONFIG.get('SESSION_EXPIRY', 3600)
                 expiry_time = timezone.now() - timedelta(seconds=expiry_seconds)
                 
@@ -165,24 +165,35 @@ class ChatbotService:
     def _get_conversation_history(
         self,
         session: ChatSession,
-        limit: int = 10
+        limit: Optional[int] = None
     ) -> list:
+        config = settings.CHATBOT_CONFIG
+        message_limit = max(
+            0, int(limit if limit is not None else config.get('HISTORY_MAX_MESSAGES', 10))
+        )
+        char_budget = max(0, int(config.get('HISTORY_MAX_CHARS', 4000)))
+        if not message_limit or not char_budget:
+            return []
+
+        # Fetch only conversational turns. Tool audit entries should not consume
+        # the message limit or be sent back to the model.
         messages = ChatMessage.objects.filter(
-            session=session
-        ).order_by('-created_at')[:limit]
-        
-        messages = list(reversed(messages))
-        
-        ai_messages = []
+            session=session, role__in=('user', 'assistant')
+        ).order_by('-created_at', '-pk')[:message_limit]
+
+        remaining = char_budget
+        selected: list[AIMessage] = []
         for msg in messages:
-            if msg.role == 'tool':
-                continue
-            
-            ai_messages.append(AIMessage(
-                role=msg.role,
-                content=msg.content
-            ))
-        
+            if remaining <= 0:
+                break
+            if selected and len(msg.content) > remaining:
+                break
+            content = msg.content[:remaining]
+            if content:
+                selected.append(AIMessage(role=msg.role, content=content))
+                remaining -= len(content)
+
+        ai_messages = list(reversed(selected))
         logger.debug(f"Retrieved {len(ai_messages)} messages for session {session.session_id}")
         return ai_messages
     
