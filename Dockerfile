@@ -8,15 +8,9 @@ ENV PYTHONPATH=/app/src
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install Python dependencies
 COPY requirements.txt /app/
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+RUN python -m pip install --no-cache-dir --requirement requirements.txt
 
 # Copy project
 COPY . /app/
