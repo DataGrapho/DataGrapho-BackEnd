@@ -182,7 +182,7 @@ class ChatbotService:
         ).order_by('-created_at', '-pk')[:message_limit]
 
         remaining = char_budget
-        selected = []
+        selected: list[AIMessage] = []
         for msg in messages:
             if remaining <= 0:
                 break
