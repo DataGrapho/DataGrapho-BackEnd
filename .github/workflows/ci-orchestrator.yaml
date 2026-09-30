@@ -61,3 +61,10 @@ jobs:
   version-tag:
     uses: ./.github/workflows/version-tag.yaml
     needs: cd-deploy
+    if: |
+      github.event_name == 'pull_request' &&
+      github.base_ref == 'main' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.head_ref, 'release/')
+    permissions:
+      contents: write
