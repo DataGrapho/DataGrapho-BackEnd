@@ -1,4 +1,12 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-trixie
+
+# Refresh the OpenSSL packages shipped in the base image. Keep security updates
+# floating so a newer Debian patch is picked up by future builds.
+# hadolint ignore=DL3008
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --only-upgrade \
+        libssl3t64 openssl openssl-provider-legacy \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
