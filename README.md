@@ -65,6 +65,18 @@ pytest -q
 Os testes do motor usam um provider falso: validam o ciclo de function calling
 sem consumir cota nem depender de uma chave externa.
 
+## Dados de demonstração
+
+O comando `seed_demo_domains` cria, nesta ordem:
+
+- **Estrutura organizacional:** 4 empresas fictícias (Hospital Santa Clara, Distribuidora
+  Alfa Comércio, Construtora Horizonte Ltda e Logística Rota Sul), com filiais, setores e
+  6 perfis (Administrador, Gestor, Analista, Médico, Enfermeiro e Atendente). Os CNPJs usam o
+  prefixo `90.000.000`, reservado para testes.
+- **Domínios do chatbot:** os dados de convênio, vendas e estoque, descritos abaixo.
+
+Os usuários não são criados pelo seed: cadastre-os pela administração.
+
 ## Domínios de demonstração
 
 Além do domínio `wine`, o chatbot tem três domínios com dados fictícios para
