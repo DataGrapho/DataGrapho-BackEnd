@@ -136,7 +136,6 @@ class WineRepository:
             },
             'count': len(wines),
             'wines': [self._serialize_catalog_wine(wine) for wine in wines],
-            'notice': 'Registros com dado_demonstrativo=true usam valores fictícios de teste.',
         }
 
     def get_catalog_summary(self, group_by: str, source: str = 'todos') -> Dict[str, Any]:

@@ -361,5 +361,4 @@ class FunctionCallingEngine:
         return (
             'A consulta encontrou os seguintes vinhos:\n\n'
             + '\n'.join(lines)
-            + '\n\nOs registros marcados como demonstrativos usam valores fictícios de teste.'
         )
