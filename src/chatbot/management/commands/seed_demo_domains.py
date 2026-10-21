@@ -1,7 +1,7 @@
 """Cria dados fictícios de demonstração para os domínios de convênio, vendas e estoque.
 
-Não é executado pelas migrations: rode manualmente, apenas em ambientes de
-demonstração. Se um domínio já tiver dados, ele é mantido sem alterações.
+É executado pelo container `web` logo após as migrations, a cada inicialização.
+Se um domínio já tiver dados, ele é mantido sem alterações.
 """
 
 import random

@@ -90,6 +90,11 @@ python manage.py migrate
 python manage.py seed_demo_domains
 ```
 
-Os dados não são criados pelas migrations de propósito, para que o deploy de
-produção não receba registros fictícios. Em produção, mantenha
-`CHATBOT_ACTIVE_DOMAINS=wine` até decidir ativar os demais domínios.
+No Docker, o container `web` roda `migrate` e depois `seed_demo_domains` a cada
+inicialização, inclusive em produção. Como o comando é idempotente, ele só cria
+dados quando as tabelas dos domínios estão vazias. Os dados são fictícios e
+ficam visíveis para qualquer usuário do chat.
+
+Em produção, os domínios só respondem se `CHATBOT_ACTIVE_DOMAINS` incluir os
+nomes desejados no `.env` do servidor. Com o padrão `wine`, os dados existem
+no banco mas não são consultados pelo chat.
