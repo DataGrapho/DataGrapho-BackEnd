@@ -4,23 +4,20 @@ Esta pasta contém domínios plugáveis para o chatbot. Cada domínio é indepen
 
 ## Domínios Disponíveis
 
-### ✅ Financial (Financeiro)
-- **Status**: Implementado
-- **Models**: Customer, Revenue, Expense
-- **Tools**: get_revenue_by_period, get_expenses_by_category, get_top_customers, compare_periods
-- **Descrição**: Análise de dados financeiros (receitas, despesas, clientes)
+Os domínios são ativados pela variável `CHATBOT_ACTIVE_DOMAINS` (ex.: `wine,convenio,vendas,estoque`).
+O nome da pasta é o nome do domínio: ele precisa bater com `register_<nome>_tools`,
+com a classe `<Nome>Repository` (em `repository.py`) e com o valor de `domain` nas ferramentas.
 
-### 🚧 HR (Recursos Humanos)
-- **Status**: Não implementado
-- **Models sugeridos**: Employee, Payroll, Benefits, Department
-- **Tools sugeridas**: get_employees_by_department, get_payroll_summary, get_benefits_by_employee
-- **Descrição**: Gestão de RH (funcionários, folha de pagamento, benefícios)
+| Domínio | Pasta | Assunto | Dados |
+| --- | --- | --- | --- |
+| `wine` | `wine/` | Catálogo e consumo de vinhos | Models em `chatbot.models`; migrations com vinhos de demonstração |
+| `convenio` | `convenio/` | Convênio médico: planos, beneficiários, atendimentos | Dados fictícios via `manage.py seed_demo_domains` |
+| `vendas` | `vendas/` | Vendas e pedidos: faturamento, produtos, clientes | Dados fictícios via `manage.py seed_demo_domains` |
+| `estoque` | `estoque/` | Estoque: saldos, estoque mínimo, movimentações | Dados fictícios via `manage.py seed_demo_domains` |
 
-### 🚧 Sales (Vendas)
-- **Status**: Não implementado
-- **Models sugeridos**: Lead, Opportunity, Deal, SalesRep
-- **Tools sugeridas**: get_pipeline_status, get_deals_by_stage, get_sales_rep_performance
-- **Descrição**: Gestão de vendas (leads, oportunidades, pipeline)
+Os modelos dos domínios `convenio`, `vendas` e `estoque` ficam nos próprios `models.py`
+e são importados em `chatbot/models.py`, para que o Django os registre no app `chatbot`.
+Ao criar um domínio novo, siga o mesmo padrão.
 
 ## Como Adicionar um Novo Domínio
 

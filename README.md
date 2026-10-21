@@ -64,3 +64,32 @@ pytest -q
 
 Os testes do motor usam um provider falso: validam o ciclo de function calling
 sem consumir cota nem depender de uma chave externa.
+
+## Domínios de demonstração
+
+Além do domínio `wine`, o chatbot tem três domínios com dados fictícios para
+apresentação:
+
+| Domínio | Assunto | Ferramentas |
+| --- | --- | --- |
+| `convenio` | Convênio médico: planos, beneficiários e atendimentos | `get_convenio_beneficiario`, `get_convenio_atendimentos`, `get_convenio_top_especialidades`, `get_convenio_planos` |
+| `vendas` | Vendas e pedidos: faturamento, produtos e clientes | `get_vendas_periodo`, `get_vendas_top_produtos`, `get_vendas_por_cliente` |
+| `estoque` | Estoque de produtos: saldos, estoque mínimo e movimentações | `get_estoque_produto`, `get_estoque_abaixo_minimo`, `get_estoque_movimentacoes` |
+
+Para ativá-los, inclua os domínios em `CHATBOT_ACTIVE_DOMAINS` no `.env`:
+
+```
+CHATBOT_ACTIVE_DOMAINS=wine,convenio,vendas,estoque
+```
+
+Depois de aplicar as migrations, crie os dados de demonstração. O comando é
+idempotente: se um domínio já tiver dados, ele não é alterado.
+
+```powershell
+python manage.py migrate
+python manage.py seed_demo_domains
+```
+
+Os dados não são criados pelas migrations de propósito, para que o deploy de
+produção não receba registros fictícios. Em produção, mantenha
+`CHATBOT_ACTIVE_DOMAINS=wine` até decidir ativar os demais domínios.
