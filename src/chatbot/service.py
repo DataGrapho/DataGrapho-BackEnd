@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.conf import settings
 
+from accounts.dominios import dominios_do_usuario
 from chatbot.models import ChatSession, ChatMessage
 from chatbot.core.engine import FunctionCallingEngine
 from chatbot.core.ai_providers import AIMessage
@@ -52,9 +53,11 @@ class ChatbotService:
             session.save(update_fields=['title', 'last_activity'])
         
         try:
+            allowed_domains = dominios_do_usuario(User.objects.get(pk=user_id))
             result = self.engine.execute_query(
                 user_message=message,
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
+                allowed_domains=allowed_domains,
             )
             
             self._store_message(

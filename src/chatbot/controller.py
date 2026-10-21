@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
+from accounts.dominios import dominios_do_usuario
 from chatbot.core.domain_loader import get_all_domain_repositories
 from chatbot.core.tool_registry import get_tool_registry
 from chatbot.dto import ChatRequestSerializer, ChatResponseSerializer
@@ -36,13 +37,14 @@ class ChatbotHealthController(APIView):
         registry = get_tool_registry()
         repositories = get_all_domain_repositories()
         configured = bool(settings.CHATBOT_CONFIG.get("AI_API_KEY"))
+        allowed = dominios_do_usuario(request.user)
         return Response(
             {
                 "status": "ok" if configured else "configuration_required",
                 "provider": settings.CHATBOT_CONFIG.get("AI_PROVIDER"),
                 "model": settings.CHATBOT_CONFIG.get("AI_MODEL"),
-                "domains": list(repositories.keys()),
-                "tools": [tool.name for tool in registry.get_all_tools()],
+                "domains": [chave for chave in repositories.keys() if chave in allowed],
+                "tools": [tool.name for tool in registry.get_tools_for_domains(allowed)],
                 "ai_configured": configured,
             }
         )

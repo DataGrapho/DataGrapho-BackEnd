@@ -202,3 +202,75 @@ class PasswordResetToken(models.Model):
 
     def is_expired(self) -> bool:
         return timezone.now() >= self.expires_at
+
+
+NIVEIS_DOMINIO = ("empresa", "filial", "setor", "usuario")
+
+
+def _somente_um_alvo(campo: str) -> Q:
+    """Condição em que apenas `campo` está preenchido entre os quatro alvos."""
+    condicao = Q(**{f"{campo}__isnull": False})
+    for outro in NIVEIS_DOMINIO:
+        if outro != campo:
+            condicao &= Q(**{f"{outro}__isnull": True})
+    return condicao
+
+
+class DominioAcesso(models.Model):
+    """Concessão de um domínio de dados da IA a uma empresa, filial, setor ou usuário.
+
+    A concessão vale para o alvo e para tudo abaixo dele: liberar uma empresa alcança
+    suas filiais, setores e usuários. Não existe exceção para retirar acesso de um nível
+    descendente; o acesso só pode ser concedido em um nível acima.
+    """
+
+    dominio = models.CharField(max_length=50)
+    empresa = models.ForeignKey(
+        Empresa, on_delete=models.CASCADE, null=True, blank=True, related_name="dominios_acesso"
+    )
+    filial = models.ForeignKey(
+        Filial, on_delete=models.CASCADE, null=True, blank=True, related_name="dominios_acesso"
+    )
+    setor = models.ForeignKey(
+        Setor, on_delete=models.CASCADE, null=True, blank=True, related_name="dominios_acesso"
+    )
+    usuario = models.ForeignKey(
+        Usuario, on_delete=models.CASCADE, null=True, blank=True, related_name="dominios_acesso"
+    )
+    criado_em = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "dominio_acesso"
+        constraints = [
+            models.CheckConstraint(
+                name="chk_dominio_acesso_um_alvo",
+                condition=(
+                    _somente_um_alvo("empresa")
+                    | _somente_um_alvo("filial")
+                    | _somente_um_alvo("setor")
+                    | _somente_um_alvo("usuario")
+                ),
+            ),
+            *[
+                models.UniqueConstraint(
+                    fields=["dominio", campo],
+                    condition=Q(**{f"{campo}__isnull": False}),
+                    name=f"uq_dominio_acesso_{campo}",
+                )
+                for campo in NIVEIS_DOMINIO
+            ],
+        ]
+
+    @property
+    def nivel(self) -> str:
+        for campo in NIVEIS_DOMINIO:
+            if getattr(self, f"{campo}_id") is not None:
+                return campo
+        return ""
+
+    @property
+    def alvo_id(self) -> int | None:
+        return getattr(self, f"{self.nivel}_id", None)
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"{self.dominio} -> {self.nivel}:{self.alvo_id}"

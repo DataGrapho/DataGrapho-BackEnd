@@ -23,13 +23,20 @@ class ToolRegistry:
     def get_all_tools(self) -> List[Tool]:
         return list(self._tools.values())
     
-    def get_tool_definitions_for_ai(self, provider: str) -> List[Dict]:
+    def get_tools_for_domains(self, domains: Optional[set]) -> List[Tool]:
+        """Ferramentas dos domínios informados. `None` significa sem restrição."""
+        if domains is None:
+            return list(self._tools.values())
+        return [tool for tool in self._tools.values() if tool.domain in domains]
+
+    def get_tool_definitions_for_ai(self, provider: str, domains: Optional[set] = None) -> List[Dict]:
         provider_upper = provider.upper()
-        
+        tools = self.get_tools_for_domains(domains)
+
         if provider_upper in ('OPENAI', 'GEMINI'):
-            return [tool.to_openai_format() for tool in self._tools.values()]
+            return [tool.to_openai_format() for tool in tools]
         elif provider_upper == 'ANTHROPIC':
-            return [tool.to_anthropic_format() for tool in self._tools.values()]
+            return [tool.to_anthropic_format() for tool in tools]
         else:
             raise ValueError(f"Unsupported AI provider: {provider}")
     
