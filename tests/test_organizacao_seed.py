@@ -1,8 +1,14 @@
+import os
+from unittest.mock import patch
+
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
 from accounts.models import Empresa, Filial, Perfil, Setor, Usuario, UsuarioAcesso
-from accounts.seed import SENHA_DEMO_USUARIOS, seed_demo_organizacao, seed_demo_usuarios
+from accounts.seed import seed_demo_organizacao, seed_demo_usuarios
+
+SENHA_TESTE = "senha-de-teste-123"
+EMAILS_DEMO = "@demo.datagrapho.test"
 
 
 class SeedOrganizacaoTest(TestCase):
@@ -50,10 +56,10 @@ class SeedUsuariosTest(TestCase):
 
     def test_senha_none_nao_cria_usuarios(self):
         self.assertEqual(seed_demo_usuarios(None), 0)
-        self.assertFalse(Usuario.objects.filter(email__endswith="@demo.datagrapho.test").exists())
+        self.assertFalse(Usuario.objects.filter(email__endswith=EMAILS_DEMO).exists())
 
     def test_cria_tres_usuarios_por_empresa(self):
-        criados = seed_demo_usuarios(SENHA_DEMO_USUARIOS)
+        criados = seed_demo_usuarios(SENHA_TESTE)
 
         self.assertEqual(criados, 3 * Empresa.objects.count())
         for empresa in Empresa.objects.all():
@@ -61,7 +67,7 @@ class SeedUsuariosTest(TestCase):
                 self.assertEqual(UsuarioAcesso.objects.filter(empresa=empresa).count(), 3)
 
     def test_administrador_e_staff_com_acesso_no_nivel_da_empresa(self):
-        seed_demo_usuarios(SENHA_DEMO_USUARIOS)
+        seed_demo_usuarios(SENHA_TESTE)
 
         admin = Usuario.objects.get(email__startswith="admin.hospital-santa-clara@")
         self.assertTrue(admin.is_staff)
@@ -71,28 +77,38 @@ class SeedUsuariosTest(TestCase):
         self.assertIsNone(acesso.filial)
 
     def test_senha_definida_e_valida(self):
-        seed_demo_usuarios(SENHA_DEMO_USUARIOS)
+        seed_demo_usuarios(SENHA_TESTE)
 
         usuario = Usuario.objects.get(email__startswith="gestor.hospital-santa-clara@")
-        self.assertTrue(usuario.check_password(SENHA_DEMO_USUARIOS))
+        self.assertTrue(usuario.check_password(SENHA_TESTE))
         self.assertFalse(usuario.check_password("outra"))
 
     def test_nao_duplica_ao_executar_de_novo(self):
-        seed_demo_usuarios(SENHA_DEMO_USUARIOS)
+        seed_demo_usuarios(SENHA_TESTE)
         total = Usuario.objects.count()
 
-        self.assertEqual(seed_demo_usuarios(SENHA_DEMO_USUARIOS), 0)
+        self.assertEqual(seed_demo_usuarios(SENHA_TESTE), 0)
         self.assertEqual(Usuario.objects.count(), total)
 
     @override_settings(DEBUG=True)
-    def test_comando_cria_usuarios_somente_com_debug_ligado(self):
+    @patch.dict(os.environ, {"DEMO_USUARIOS_SENHA": SENHA_TESTE})
+    def test_comando_cria_usuarios_com_debug_e_senha_definidos(self):
         call_command("seed_demo_domains")
 
-        self.assertTrue(Usuario.objects.filter(email__endswith="@demo.datagrapho.test").exists())
+        self.assertTrue(Usuario.objects.filter(email__endswith=EMAILS_DEMO).exists())
+
+    @override_settings(DEBUG=True)
+    def test_comando_nao_cria_usuarios_sem_senha_definida(self):
+        with patch.dict(os.environ):
+            os.environ.pop("DEMO_USUARIOS_SENHA", None)
+            call_command("seed_demo_domains")
+
+        self.assertFalse(Usuario.objects.filter(email__endswith=EMAILS_DEMO).exists())
 
     @override_settings(DEBUG=False)
+    @patch.dict(os.environ, {"DEMO_USUARIOS_SENHA": SENHA_TESTE})
     def test_comando_nao_cria_usuarios_em_producao(self):
         call_command("seed_demo_domains")
 
-        self.assertFalse(Usuario.objects.filter(email__endswith="@demo.datagrapho.test").exists())
+        self.assertFalse(Usuario.objects.filter(email__endswith=EMAILS_DEMO).exists())
         self.assertEqual(Empresa.objects.count(), 4)

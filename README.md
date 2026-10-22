@@ -75,7 +75,7 @@ O comando `seed_demo_domains` cria, nesta ordem:
   prefixo `90.000.000`, reservado para testes.
 - **Domínios do chatbot:** os dados de convênio, vendas e estoque, descritos abaixo.
 
-Os usuários não são criados pelo seed: cadastre-os pela administração.
+Usuários de demonstração (três por empresa) só são criados com `DEBUG=True` e com a variável `DEMO_USUARIOS_SENHA` definida no `.env`. Em produção, `DEBUG` é `False`, então nenhum usuário é criado. Sem a variável, o seed não cria usuários.
 
 ## Domínios de demonstração
 

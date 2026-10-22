@@ -6,9 +6,6 @@ a uma empresa real. Os dados são criados apenas quando ainda não existe nenhum
 
 from accounts.models import Empresa, Filial, Perfil, Setor
 
-# Senha única dos usuários de demonstração. Só é usada em ambiente local (DEBUG=True).
-SENHA_DEMO_USUARIOS = "Senha123"
-
 
 PERFIS = [
     ("Administrador", "Acesso administrativo à organização"),

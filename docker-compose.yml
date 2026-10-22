@@ -28,6 +28,7 @@ services:
     restart: unless-stopped
     environment:
       - DEBUG=${DEBUG:-False}
+      - DEMO_USUARIOS_SENHA=${DEMO_USUARIOS_SENHA:-}
       - SECRET_KEY=${SECRET_KEY:?Defina SECRET_KEY no arquivo .env}
       - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-True}
       - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-True}
