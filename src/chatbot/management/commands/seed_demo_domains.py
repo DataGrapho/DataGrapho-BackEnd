@@ -4,13 +4,14 @@
 Cada parte só cria dados quando ainda não existem registros, sem alterar o que já houver.
 """
 
+import os
 import random
 from datetime import date
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from accounts.seed import SENHA_DEMO_USUARIOS, seed_demo_organizacao, seed_demo_usuarios
+from accounts.seed import seed_demo_organizacao, seed_demo_usuarios
 from depara.seed import seed_demo_depara
 from chatbot.domains.convenio import seed as convenio_seed
 from chatbot.domains.estoque import seed as estoque_seed
@@ -34,15 +35,19 @@ class Command(BaseCommand):
         else:
             self.stdout.write('Catálogos De/Para já existentes, mantidos')
 
-        # Usuários com senha conhecida existem só em ambiente local (DEBUG=True).
-        if settings.DEBUG:
-            criados = seed_demo_usuarios(SENHA_DEMO_USUARIOS)
+        # Usuários com senha conhecida existem só em ambiente local: exigem DEBUG=True
+        # e a senha definida em DEMO_USUARIOS_SENHA. Sem qualquer uma das duas, nada é criado.
+        senha = os.environ.get('DEMO_USUARIOS_SENHA', '')
+        if not settings.DEBUG:
+            self.stdout.write('Usuários de demonstração não criados: somente em ambiente local (DEBUG)')
+        elif not senha:
+            self.stdout.write('Usuários de demonstração não criados: DEMO_USUARIOS_SENHA não definida')
+        else:
+            criados = seed_demo_usuarios(senha)
             if criados:
                 self.stdout.write(self.style.SUCCESS(f'Usuários de demonstração criados: {criados}'))
             else:
                 self.stdout.write('Usuários de demonstração já existentes, mantidos')
-        else:
-            self.stdout.write('Usuários de demonstração não criados: somente em ambiente local (DEBUG)')
 
         today = date.today()
         seeders = [
