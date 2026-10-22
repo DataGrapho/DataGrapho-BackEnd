@@ -15,7 +15,7 @@ on:
         required: false
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
