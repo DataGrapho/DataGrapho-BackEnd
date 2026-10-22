@@ -5,12 +5,24 @@ correspondem a dados de nenhum cliente. O seed só cria registros quando ainda n
 existe nenhum catálogo, então não altera nada que já tenha sido cadastrado.
 """
 
+from typing import TypedDict
+
 from catalogo_depara.models import CatalogoDePara
 from depara.models import DePara
 
 
-# (codigo_origem, descricao_origem, codigo_destino, descricao_destino, filhos)
-CATALOGOS = [
+# (codigo_origem, descricao_origem, codigo_destino, descricao_destino)
+Mapeamento = tuple[str, str, str, str]
+
+
+class CatalogoSeed(TypedDict):
+    tabela_origem: str
+    descricao: str
+    # Cada item: (codigo_origem, descricao_origem, codigo_destino, descricao_destino, filhos).
+    mapeamentos: list[tuple[str, str, str, str, list[Mapeamento]]]
+
+
+CATALOGOS: list[CatalogoSeed] = [
     {
         "tabela_origem": "produtos.unidade",
         "descricao": "Unidades de medida do sistema de origem",
