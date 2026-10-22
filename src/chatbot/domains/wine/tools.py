@@ -206,8 +206,7 @@ class GetTopWinesTool(Tool):
             name='get_top_wines',
             description=(
                 'Obter o ranking de vinhos por total de unidades consumidas. '
-                'A resposta diferencia unidades de eventos, identifica dados demonstrativos '
-                'e inclui todos os vinhos empatados na posição de corte. '
+                'A resposta diferencia unidades de eventos e inclui todos os vinhos empatados na posição de corte. '
                 'O limite padrão é 10, máximo é 100.'
             ),
             parameters={

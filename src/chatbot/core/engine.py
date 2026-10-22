@@ -44,21 +44,36 @@ class FunctionCallingEngine:
     def execute_query(
         self,
         user_message: str,
-        conversation_history: Optional[List[AIMessage]] = None
+        conversation_history: Optional[List[AIMessage]] = None,
+        allowed_domains: Optional[set] = None,
     ) -> ExecutionResult:
+        """Executa a pergunta. `allowed_domains=None` não restringe as ferramentas."""
         start_time = time.time()
-        
+
         messages = conversation_history.copy() if conversation_history else []
         messages.append(AIMessage(role='user', content=user_message))
-        
+
         tools_used: List[str] = []
         tool_calls_count = 0
         successful_tool_results = []
         grounding_retry_sent = False
-        
+
         provider_name = settings.CHATBOT_CONFIG.get('AI_PROVIDER', 'openai')
-        tool_definitions = self.tool_registry.get_tool_definitions_for_ai(provider_name)
-        
+        tool_definitions = self.tool_registry.get_tool_definitions_for_ai(
+            provider_name, domains=allowed_domains
+        )
+
+        if allowed_domains is not None and not tool_definitions:
+            # Sem nenhum domínio liberado, a IA não recebe ferramentas e não consulta dados.
+            return ExecutionResult(
+                response=(
+                    'Seu usuário ainda não tem acesso a nenhum domínio de dados. '
+                    'Fale com um administrador para solicitar a liberação.'
+                ),
+                tools_used=[],
+                tool_calls_count=0,
+            )
+
         logger.info(
             f"Starting query execution: user_message='{user_message[:50]}...', "
             f"available_tools={len(tool_definitions)}"
@@ -124,6 +139,7 @@ class FunctionCallingEngine:
                                 tool_name,
                                 tool_call['arguments'],
                                 user_message=user_message,
+                                allowed_domains=allowed_domains,
                             )
                             tool_duration = time.time() - tool_start
                             result_content = json.dumps(
@@ -215,11 +231,16 @@ class FunctionCallingEngine:
         tool_name: str,
         arguments_json: str,
         user_message: str = '',
+        allowed_domains: Optional[set] = None,
     ) -> Dict[str, Any]:
         tool = self.tool_registry.get_tool(tool_name)
         if not tool:
             raise ValueError(f"Tool '{tool_name}' not found in registry")
-        
+        if allowed_domains is not None and tool.domain not in allowed_domains:
+            # Barreira de segurança: a IA não pode executar ferramentas fora dos domínios liberados.
+            logger.warning('Blocked tool %s from domain %s: no access', tool_name, tool.domain)
+            raise ValueError(f"Sem acesso ao domínio da ferramenta '{tool_name}'")
+
         try:
             arguments = json.loads(arguments_json)
         except json.JSONDecodeError as e:
@@ -361,5 +382,4 @@ class FunctionCallingEngine:
         return (
             'A consulta encontrou os seguintes vinhos:\n\n'
             + '\n'.join(lines)
-            + '\n\nOs registros marcados como demonstrativos usam valores fictícios de teste.'
         )

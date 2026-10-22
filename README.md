@@ -64,3 +64,49 @@ pytest -q
 
 Os testes do motor usam um provider falso: validam o ciclo de function calling
 sem consumir cota nem depender de uma chave externa.
+
+## Dados de demonstração
+
+O comando `seed_demo_domains` cria, nesta ordem:
+
+- **Estrutura organizacional:** 4 empresas fictícias (Hospital Santa Clara, Distribuidora
+  Alfa Comércio, Construtora Horizonte Ltda e Logística Rota Sul), com filiais, setores e
+  6 perfis (Administrador, Gestor, Analista, Médico, Enfermeiro e Atendente). Os CNPJs usam o
+  prefixo `90.000.000`, reservado para testes.
+- **Domínios do chatbot:** os dados de convênio, vendas e estoque, descritos abaixo.
+
+Os usuários não são criados pelo seed: cadastre-os pela administração.
+
+## Domínios de demonstração
+
+Além do domínio `wine`, o chatbot tem três domínios com dados fictícios para
+apresentação:
+
+| Domínio | Assunto | Ferramentas |
+| --- | --- | --- |
+| `convenio` | Convênio médico: planos, beneficiários e atendimentos | `get_convenio_beneficiario`, `get_convenio_atendimentos`, `get_convenio_top_especialidades`, `get_convenio_planos` |
+| `vendas` | Vendas e pedidos: faturamento, produtos e clientes | `get_vendas_periodo`, `get_vendas_top_produtos`, `get_vendas_por_cliente` |
+| `estoque` | Estoque de produtos: saldos, estoque mínimo e movimentações | `get_estoque_produto`, `get_estoque_abaixo_minimo`, `get_estoque_movimentacoes` |
+
+Para ativá-los, inclua os domínios em `CHATBOT_ACTIVE_DOMAINS` no `.env`:
+
+```
+CHATBOT_ACTIVE_DOMAINS=wine,convenio,vendas,estoque
+```
+
+Depois de aplicar as migrations, crie os dados de demonstração. O comando é
+idempotente: se um domínio já tiver dados, ele não é alterado.
+
+```powershell
+python manage.py migrate
+python manage.py seed_demo_domains
+```
+
+No Docker, o container `web` roda `migrate` e depois `seed_demo_domains` a cada
+inicialização, inclusive em produção. Como o comando é idempotente, ele só cria
+dados quando as tabelas dos domínios estão vazias. Os dados são fictícios e
+ficam visíveis para qualquer usuário do chat.
+
+Em produção, os domínios só respondem se `CHATBOT_ACTIVE_DOMAINS` incluir os
+nomes desejados no `.env` do servidor. Com o padrão `wine`, os dados existem
+no banco mas não são consultados pelo chat.

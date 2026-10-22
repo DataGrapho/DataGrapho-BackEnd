@@ -274,3 +274,24 @@ class WineConsumption(models.Model):
 
     def __str__(self):
         return f'{self.wine.name} - {self.consumed_at}'
+
+
+# Modelos dos domínios plugáveis (convênio, vendas, estoque). Ficam importados aqui
+# para que o Django os registre no app `chatbot` e crie as tabelas nas migrations.
+from chatbot.domains.convenio.models import (  # noqa: E402,F401
+    ConvenioAtendimento,
+    ConvenioBeneficiario,
+    ConvenioPlano,
+)
+from chatbot.domains.estoque.models import (  # noqa: E402,F401
+    EstoqueDeposito,
+    EstoqueMovimentacao,
+    EstoqueProduto,
+    EstoqueSaldo,
+)
+from chatbot.domains.vendas.models import (  # noqa: E402,F401
+    VendasCliente,
+    VendasItemPedido,
+    VendasPedido,
+    VendasProduto,
+)

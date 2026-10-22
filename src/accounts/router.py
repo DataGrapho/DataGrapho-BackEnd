@@ -15,6 +15,7 @@ from .controller import (
     SetorViewSet,
     UsuarioViewSet,
 )
+from .dominio_controller import DominioAcessoDetailView, DominioAcessoView, DominiosDisponiveisView
 
 app_name = "accounts"
 
@@ -33,5 +34,12 @@ urlpatterns = [
     path("password/forgot/", ForgotPasswordView.as_view(), name="auth-password-forgot"),
     path("password/reset/", ResetPasswordView.as_view(), name="auth-password-reset"),
     path("password/change/", ChangePasswordView.as_view(), name="auth-password-change"),
+    path("dominios/", DominiosDisponiveisView.as_view(), name="auth-dominios"),
+    path("dominio-acessos/", DominioAcessoView.as_view(), name="auth-dominio-acessos"),
+    path(
+        "dominio-acessos/<int:pk>/",
+        DominioAcessoDetailView.as_view(),
+        name="auth-dominio-acesso-detail",
+    ),
     path("", include(router.urls)),
 ]
